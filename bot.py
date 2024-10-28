@@ -27,6 +27,9 @@ async def on_message(message):
     if "ping" in message.content.lower():
         await message.channel.send("Pong! 🏓")
 
+    if "pong" in message.content.lower():
+        await message.channel.send("Bon tg")
+
     # Vérifiez si le message contient "joris"
     if "joris" in message.content.lower():
         await message.reply("Qu'il repose en paix 🪦😢")
