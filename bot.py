@@ -1,65 +1,57 @@
 import discord
 from discord.ext import commands
-from music_player import play_music, stop_music, leave_voice_channel  # Importez les fonctions de musique
+from discord import app_commands
+from music_player import play_music, stop_music, leave_voice_channel
 import asyncio
-import random  # Ajoutez cette ligne si ce n'est pas déjà fait
-
-# Importez la fonction depuis le fichier pile_ou_face
 from pile_ou_face import pile_ou_face
 
-# Créez une instance de bot
 intents = discord.Intents.default()
-intents.messages = True  # Assurez-vous que les messages sont activés
-intents.message_content = True  # Activer le message content intent (si nécessaire)
+intents.messages = True
+intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()
     print(f'Bot connecté en tant que {bot.user}')
 
 @bot.event
 async def on_message(message):
-    # Ignorer les messages du bot lui-même
     if message.author == bot.user:
         return
 
-    # Vérifiez si le message contient "ping"
     if "ping" in message.content.lower():
         await message.channel.send("Pong! 🏓")
 
     if "pong" in message.content.lower():
         await message.channel.send("Bon tg")
 
-    # Vérifiez si le message contient "joris"
     if "joris" in message.content.lower():
         await message.reply("Qu'il repose en paix 🪦😢")
 
-    # Vérifiez si le message contient "ta gueule", "tagueule" ou "tg"
     if any(phrase in message.content.lower() for phrase in ["ta gueule", "tagueule", "tg"]):
         await message.reply("Toi ferme la 😡")
 
-    # Assurez-vous d'appeler cette ligne pour traiter les commandes
     await bot.process_commands(message)
 
-# Ajoutez la commande pile ou face
-@bot.command(name='pileouface')
-async def pileouface_command(ctx):
-    await pile_ou_face(ctx)  # Appelle la fonction du fichier pile_ou_face.py
+# Commande pile ou face en slash
+@bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
+async def pileouface_command(interaction: discord.Interaction):
+    await pile_ou_face(interaction)
 
-# Commande pour jouer de la musique
-@bot.command(name='play')
-async def play_command(ctx, *, url: str):
-    await play_music(ctx, url)
+# Commande slash pour jouer de la musique
+@bot.tree.command(name="play", description="Joue de la musique depuis une URL YouTube.")
+async def play_command(interaction: discord.Interaction, url: str):
+    await play_music(interaction, url)
 
-# Commande pour arrêter la musique
-@bot.command(name='stop')
-async def stop_command(ctx):
-    await stop_music(ctx)
+# Commande slash pour arrêter la musique
+@bot.tree.command(name="stop", description="Arrête la musique en cours.")
+async def stop_command(interaction: discord.Interaction):
+    await stop_music(interaction)
 
-# Commande pour faire quitter le canal vocal au bot
-@bot.command(name='leave')
-async def leave_command(ctx):
-    await leave_voice_channel(ctx)
+# Commande slash pour quitter le canal vocal
+@bot.tree.command(name="leave", description="Fait quitter le canal vocal au bot.")
+async def leave_command(interaction: discord.Interaction):
+    await leave_voice_channel(interaction)
 
-# Remplacez 'YOUR_TOKEN' par votre token de bot
-bot.run('')  # Remplacez par votre token
+bot.run('')
