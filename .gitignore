@@ -1,2 +1,5 @@
 
-__pycache__/music_player.cpython-311.pyc
+/__pycache__
+
+/venv
+/ffmpeg
