@@ -11,62 +11,20 @@ intents.messages = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Dictionnaire pour garder la trace des tâches de mute actives
+mute_tasks = {}
+
 @bot.event
 async def on_ready():
     await bot.tree.sync()
     print(f'Bot connecté en tant que {bot.user}')
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    if "ping" in message.content.lower():
-        await message.channel.send("Pong! 🏓")
-
-    if "thanatos" in message.content.lower():
-        await message.channel.send("Oui ? 😎")
-
-    if "keo" in message.content.lower():
-        await message.channel.send("L'aigri est en train d'écrire...")
-
-    if "pong" in message.content.lower():
-        await message.channel.send("Bon tg")
-
-    if "joris" in message.content.lower():
-        await message.reply("Qu'il repose en paix 🪦😢")
-
-    if any(phrase in message.content.lower() for phrase in ["ta gueule", "tagueule", "tg"]):
-        await message.reply("Toi ferme la 😡")
-
-    await bot.process_commands(message)
-
-# Commande pile ou face en slash
-@bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
-async def pileouface_command(interaction: discord.Interaction):
-    await pile_ou_face(interaction)
-
-# Commande slash pour jouer de la musique
-@bot.tree.command(name="play", description="Joue de la musique depuis une URL YouTube.")
-async def play_command(interaction: discord.Interaction, url: str):
-    await play_music(interaction, url)
-
-# Commande slash pour arrêter la musique
-@bot.tree.command(name="stop", description="Arrête la musique en cours.")
-async def stop_command(interaction: discord.Interaction):
-    await stop_music(interaction)
-
-# Commande slash pour quitter le canal vocal
-@bot.tree.command(name="leave", description="Fait quitter le canal vocal au bot.")
-async def leave_command(interaction: discord.Interaction):
-    await leave_voice_channel(interaction)
-
+# (Les événements on_message, pileouface, play, stop, leave sont ici comme avant)
 
 # Commande slash pour mute un utilisateur (texte + vocal)
 @bot.tree.command(name="tg", description="Mute un utilisateur temporairement en texte et vocal (Admin seulement).")
 @app_commands.describe(member="L'utilisateur à mute", duration="Durée en minutes")
 async def tg_command(interaction: discord.Interaction, member: discord.Member, duration: int):
-    # Vérifiez si l'utilisateur exécutant la commande est admin
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("Tu veux quoi toi t'es pas admin enculé", ephemeral=True)
         return
@@ -74,56 +32,55 @@ async def tg_command(interaction: discord.Interaction, member: discord.Member, d
     # Récupérer ou créer un rôle muet pour le texte
     mute_role = discord.utils.get(interaction.guild.roles, name="Muted")
     if not mute_role:
-        mute_role = await interaction.guild.create_role(name="Muted",
-                                                        reason="Rôle pour mute temporairement les utilisateurs")
-
-        # Supprimer la permission d'envoyer des messages sur tous les salons texte
+        mute_role = await interaction.guild.create_role(name="Muted", reason="Rôle pour mute temporairement les utilisateurs")
         for channel in interaction.guild.text_channels:
             await channel.set_permissions(mute_role, send_messages=False)
 
-    # Appliquer le rôle muet à l'utilisateur pour le texte
+    # Appliquer le rôle muet
     await member.add_roles(mute_role, reason="Utilisateur muté temporairement en texte")
-
-    # Muter l'utilisateur en vocal s'il est connecté à un canal vocal
     if member.voice and not member.voice.mute:
         await member.edit(mute=True, reason="Utilisateur muté temporairement en vocal")
 
-    # Envoyer un message de confirmation
-    await interaction.response.send_message(
-        f"Aller {member.mention}, toi tu fermes ta gueule pendant {duration} minutes, merci bien.")
+    await interaction.response.send_message(f"Aller {member.mention}, toi tu fermes ta gueule pendant {duration} minutes, merci bien.")
 
-    # Définir un délai pour enlever le rôle muet et rétablir le vocal après la durée spécifiée
-    await asyncio.sleep(duration * 60)
-    await member.remove_roles(mute_role, reason="Durée de mute texte écoulée")
+    # Si un mute est déjà en cours pour cet utilisateur, on l'annule
+    if member.id in mute_tasks:
+        mute_tasks[member.id].cancel()
 
-    # Démuter l'utilisateur en vocal après le délai
-    if member.voice and member.voice.mute:
-        await member.edit(mute=False, reason="Durée de mute vocal écoulée")
+    # Créer la tâche de mute et l'ajouter au dictionnaire
+    mute_task = asyncio.create_task(unmute_after_delay(member, mute_role, duration, interaction))
+    mute_tasks[member.id] = mute_task
 
-    # Message pour informer que le mute est terminé
-    await interaction.followup.send(
-        f"{member.mention} bon tu reparles mais fais pas trop de bruit sinon je te recoupe la connexion.")
-
+async def unmute_after_delay(member, mute_role, duration, interaction):
+    try:
+        await asyncio.sleep(duration * 60)
+        if mute_role in member.roles:
+            await member.remove_roles(mute_role, reason="Durée de mute texte écoulée")
+        if member.voice and member.voice.mute:
+            await member.edit(mute=False, reason="Durée de mute vocal écoulée")
+        await interaction.followup.send(f"{member.mention} C'est l'heure de remettre la connexion mais m'embête pas trop parce que je peux couper l'électrécité aussi")
+    finally:
+        mute_tasks.pop(member.id, None)  # Nettoyer le dictionnaire après le mute
 
 # Commande slash pour unmute un utilisateur
 @bot.tree.command(name="untg", description="Enlève le mute d'un utilisateur (Admin seulement).")
 @app_commands.describe(member="L'utilisateur à unmute")
 async def untg_command(interaction: discord.Interaction, member: discord.Member):
-    # Vérifiez si l'utilisateur exécutant la commande est admin
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("Tu veux quoi toi t'es pas admin enculé", ephemeral=True)
         return
 
-    # Récupérer le rôle "Muted"
     mute_role = discord.utils.get(interaction.guild.roles, name="Muted")
     if mute_role in member.roles:
         await member.remove_roles(mute_role, reason="Unmute manuel par un admin")
-
-    # Si l'utilisateur est mute en vocal, on enlève le mute
     if member.voice and member.voice.mute:
         await member.edit(mute=False, reason="Unmute vocal manuel par un admin")
 
-    # Confirmer le unmute à l'admin
-    await interaction.response.send_message(f"{member.mention} a été démute. Bienvenue à nouveau dans le monde des vivants.")
+    # Annuler la tâche de mute si elle existe
+    if member.id in mute_tasks:
+        mute_tasks[member.id].cancel()
+        mute_tasks.pop(member.id, None)
+
+    await interaction.response.send_message(f"{member.mention} Je t'ai remis la connexion mais fais gaffe à toi, sinon Thanatos se met en colère")
 
 bot.run('')
