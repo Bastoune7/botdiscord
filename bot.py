@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands  # Importez app_commands pour les commandes slash
 from music_player import play_music, stop_music, leave_voice_channel  # Importez les fonctions de musique
 import asyncio
 import random  # Ajoutez cette ligne si ce n'est pas déjà fait
@@ -15,6 +16,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
+    await bot.tree.sync()  # Synchronise les commandes slash avec Discord
     print(f'Bot connecté en tant que {bot.user}')
 
 @bot.event
@@ -41,10 +43,11 @@ async def on_message(message):
     # Assurez-vous d'appeler cette ligne pour traiter les commandes
     await bot.process_commands(message)
 
-# Ajoutez la commande pile ou face
-@bot.command(name='pileouface')
-async def pileouface_command(ctx):
-    await pile_ou_face(ctx)  # Appelle la fonction du fichier pile_ou_face.py
+# Commande pile ou face en slash
+@bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
+async def pileouface_command(interaction: discord.Interaction):
+    await pile_ou_face(interaction)  # Appelle la fonction du fichier pile_ou_face.py
+
 
 # Commande pour jouer de la musique
 @bot.command(name='play')
@@ -62,4 +65,4 @@ async def leave_command(ctx):
     await leave_voice_channel(ctx)
 
 # Remplacez 'YOUR_TOKEN' par votre token de bot
-bot.run('')  # Remplacez par votre token
+bot.run('MTA2NTU5MjM5Nzk0NzQ4NjMxOQ.GI3-F6.EN3876xlZRKhN8VS6_ImLpSQm3NpghSfAFKn8k')  # Remplacez par votre token
