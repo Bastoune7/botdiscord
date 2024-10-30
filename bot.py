@@ -49,15 +49,24 @@ async def monitor_server_logs(interaction):
         await interaction.followup.send("Impossible de lire les logs du serveur.")
         return
 
-    await asyncio.sleep(5)  # Attendre un peu pour que les logs commencent
+    await asyncio.sleep(5)  # Attendre pour laisser le serveur démarrer
+
     async with interaction.channel.typing():
-        while server_process.poll() is None:  # Tant que le processus est actif
+        logs = []  # Stocker les lignes de logs ici
+        while server_process.poll() is None:  # Tant que le serveur est en cours d'exécution
             line = server_process.stdout.readline()
+            logs.append(line)  # Ajouter chaque ligne lue aux logs
+
             if "Done" in line:  # Si le serveur est prêt
                 await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
-                break
-            await interaction.followup.send(line)
+                return  # Quitter la fonction si le serveur a démarré correctement
+
             await asyncio.sleep(1)
+
+        # Si on arrive ici, le serveur n’a pas démarré correctement
+        if logs:
+            error_logs = ''.join(logs)  # Joindre tous les logs en une seule chaîne
+            await interaction.followup.send(f"Le serveur a échoué à démarrer. Logs:\n{error_logs}")
 
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
