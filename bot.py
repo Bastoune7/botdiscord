@@ -80,7 +80,10 @@ async def start_minecraft(interaction: discord.Interaction):
 
     try:
         server_process = subprocess.Popen(
-            ["cmd.exe", "/K", "start_server.bat"]
+            ["cmd.exe", "/K", "start_server.bat"],
+            stdout=subprocess.PIPE,  # Redirection de la sortie standard pour capturer les logs
+            stderr=subprocess.STDOUT,  # Redirection des erreurs vers la sortie standard
+            text=True  # Assure que les lignes sont lues en tant que texte
         )
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
