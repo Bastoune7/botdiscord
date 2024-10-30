@@ -19,8 +19,24 @@ async def on_ready():
     await bot.tree.sync()
     print(f'Bot connecté en tant que {bot.user}')
 
-# (Les événements on_message, pileouface, play, stop, leave sont ici comme avant)
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+            return
 
+    if "ping" in message.content.lower():
+        await message.channel.send("Pong! 🏓")
+
+    if "pong" in message.content.lower():
+        await message.channel.send("Bon tg")
+
+    if "joris" in message.content.lower():
+        await message.reply("Qu'il repose en paix 🪦😢")
+
+    if any(phrase in message.content.lower() for phrase in ["ta gueule", "tagueule", "tg"]):
+        await message.reply("Toi ferme la 😡")
+
+    await bot.process_commands(message)
 # Commande slash pour mute un utilisateur (texte + vocal)
 @bot.tree.command(name="tg", description="Mute un utilisateur temporairement en texte et vocal (Admin seulement).")
 @app_commands.describe(member="L'utilisateur à mute", duration="Durée en minutes")
