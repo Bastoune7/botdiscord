@@ -54,7 +54,7 @@ async def monitor_server_logs(interaction):
     async with interaction.channel.typing():
         logs = []  # Stocker les lignes de logs ici
         while server_process.poll() is None:  # Tant que le serveur est en cours d'exécution
-            line = server_process.stdout.readline()
+            line = server_process.stdout.readline() if server_process.stdout else ""
             logs.append(line)  # Ajouter chaque ligne lue aux logs
 
             if "Done" in line:  # Si le serveur est prêt
