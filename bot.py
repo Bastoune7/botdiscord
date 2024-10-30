@@ -76,8 +76,9 @@ async def start_minecraft(interaction: discord.Interaction):
 
     try:
         server_process = subprocess.Popen(
-            ["java", "-Xmx1024M", "-Xms1024M", "-jar", SERVER_PATH, "nogui"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["java", "-jar", SERVER_PATH, "nogui"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True  # Permet de lire les sorties comme des chaînes de caractères
         )
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
