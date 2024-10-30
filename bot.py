@@ -79,12 +79,8 @@ async def start_minecraft(interaction: discord.Interaction):
         return
 
     try:
-        # Lancer le script batch pour démarrer le serveur, sans ouvrir une nouvelle fenêtre
         server_process = subprocess.Popen(
-            ["cmd.exe", "/C", "start_server.bat"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
+            ["cmd.exe", "/K", "start_server.bat"]
         )
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
