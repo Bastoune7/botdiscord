@@ -6,6 +6,10 @@ import asyncio
 from datetime import timedelta
 from pile_ou_face import pile_ou_face
 
+# Charger le token depuis config.txt
+with open("config.txt", "r") as file:
+    TOKEN = file.read().strip()
+
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
