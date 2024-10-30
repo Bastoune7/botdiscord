@@ -118,6 +118,16 @@ async def restart_minecraft(interaction: discord.Interaction):
     await asyncio.sleep(5)  # Attendre un moment avant de redémarrer
     await start_minecraft(interaction)
 
+# Commande pour vérifier l'état du serveur Minecraft
+@bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
+async def check_minecraft(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    if server_process is None or server_process.poll() is not None:
+        await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
+    else:
+        await interaction.followup.send("Le serveur Minecraft est en cours d'exécution et est en ligne ! 🟢")
+
 
 @bot.event
 async def on_ready():
