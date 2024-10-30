@@ -45,7 +45,7 @@ server_process = None
 
 
 async def monitor_server_logs(interaction):
-    if server_process.stdout is None:
+    if server_process is None or server_process.stdout is None:
         await interaction.followup.send("Impossible de lire les logs du serveur.")
         return
 
@@ -105,7 +105,7 @@ async def stop_minecraft(interaction: discord.Interaction):
     try:
         server_process.terminate()
         server_process.wait()
-        server_process = None
+        server_process = None  # Réinitialiser `server_process` pour éviter les erreurs lors du redémarrage
         await interaction.followup.send("Le serveur Minecraft a été arrêté.")
     except Exception as e:
         await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
