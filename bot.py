@@ -79,7 +79,7 @@ async def start_minecraft(interaction: discord.Interaction):
     try:
         # Lancer le script batch pour démarrer le serveur
         server_process = subprocess.Popen(
-            ["cmd.exe", "/C", "start", "lancer_serveur.bat"],
+            ["cmd.exe", "/C", "start", "start_server.bat"],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True
         )
