@@ -44,27 +44,20 @@ def log_event(event_name, reason=""):
 server_process = None
 
 
-# Fonction pour lire les premières lignes du log du serveur
 async def monitor_server_logs(interaction):
-    await asyncio.sleep(5)  # Temps pour le serveur de démarrer la création de logs
-    log_file = os.path.join("logs", "latest.log")
+    if server_process.stdout is None:
+        await interaction.followup.send("Impossible de lire les logs du serveur.")
+        return
 
-    # Lire les premières lignes jusqu'à "Done"
+    await asyncio.sleep(5)  # Attendre un peu pour que les logs commencent
     async with interaction.channel.typing():
-        while server_process.poll() is None:
-            try:
-                with open(log_file, "r") as f:
-                    logs = f.readlines()
-                    if any("Done" in line for line in logs):
-                        await interaction.followup.send(
-                            "Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
-                        break
-                    else:
-                        await interaction.followup.send("".join(logs[-10:]))  # Envoyer les dernières lignes du log
-                        await asyncio.sleep(5)  # Attendre avant de renvoyer les logs
-
-            except Exception as e:
-                await interaction.followup.send("Erreur lors de la lecture des logs.")
+        while server_process.poll() is None:  # Tant que le processus est actif
+            line = server_process.stdout.readline()
+            if "Done" in line:  # Si le serveur est prêt
+                await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
+                break
+            await interaction.followup.send(line)
+            await asyncio.sleep(1)
 
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
@@ -77,16 +70,17 @@ async def start_minecraft(interaction: discord.Interaction):
         return
 
     try:
-        # Lancer le script batch pour démarrer le serveur
+        # Lancer le script batch pour démarrer le serveur, sans ouvrir une nouvelle fenêtre
         server_process = subprocess.Popen(
-            ["cmd.exe", "/C", "start", "start_server.bat"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            ["cmd.exe", "/C", "start_server.bat"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True
         )
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
-        # Lancer le suivi des logs pour indiquer quand le serveur est prêt
-        await monitor_server_logs(interaction)
+        # Lancer une tâche pour surveiller les logs et envoyer un message quand le serveur est prêt
+        asyncio.create_task(monitor_server_logs(interaction))
     except Exception as e:
         await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
 
