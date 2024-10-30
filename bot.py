@@ -214,8 +214,8 @@ async def leave_command(interaction: discord.Interaction):
     except Exception as e:
 
 
-await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
-log_command("leave", interaction.user, [], success=False)
+        await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
+        log_command("leave", interaction.user, [], success=False)
 
 
 # Commande pour muter un membre
