@@ -6,12 +6,15 @@ import asyncio
 from datetime import datetime, timedelta
 import signal
 import sys
+import subprocess
+import os
 from pile_ou_face import pile_ou_face
 
-# Charger le token depuis config.txt
-with open("config.txt", "r") as file:
-    TOKEN = file.read().strip()
+# Charger le chemin du serveur depuis server_path.txt
+with open("server_path.txt", "r") as file:
+    SERVER_PATH = file.read().strip()
 
+# Initialiser le bot et les intents
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
@@ -32,6 +35,75 @@ def log_event(event_name, reason=""):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("log.txt", "a") as log_file:
         log_file.write(f"[{timestamp}] Événement: {event_name}, Raison: {reason}\n")
+
+# Dictionnaire pour garder la trace du processus du serveur
+server_process = None
+
+# Fonction pour lire les premières lignes du log du serveur
+async def monitor_server_logs(interaction):
+    await asyncio.sleep(5)  # Temps pour le serveur de démarrer la création de logs
+    log_file = os.path.join(os.path.dirname(SERVER_PATH), "logs", "latest.log")
+
+    # Lire les premières lignes jusqu'à "Done"
+    async with interaction.channel.typing():
+        while server_process.poll() is None:
+            try:
+                with open(log_file, "r") as f:
+                    logs = f.readlines()
+                    if any("Done" in line for line in logs):
+                        await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
+                        break
+                    else:
+                        await interaction.followup.send("".join(logs[-10:]))  # Envoyer les dernières lignes du log
+                        await asyncio.sleep(5)  # Attendre avant de renvoyer les logs
+
+            except Exception as e:
+                await interaction.followup.send("Erreur lors de la lecture des logs.")
+
+@bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
+async def start_minecraft(interaction: discord.Interaction):
+    global server_process
+    await interaction.response.defer()
+
+    if server_process is not None and server_process.poll() is None:
+        await interaction.followup.send("Le serveur est déjà en cours d'exécution !")
+        return
+
+    try:
+        server_process = subprocess.Popen(
+            ["java", "-Xmx1024M", "-Xms1024M", "-jar", SERVER_PATH, "nogui"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        await interaction.followup.send("Démarrage du serveur Minecraft...")
+
+        # Lancer le suivi des logs pour indiquer quand le serveur est prêt
+        await monitor_server_logs(interaction)
+    except Exception as e:
+        await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
+
+@bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
+async def stop_minecraft(interaction: discord.Interaction):
+    global server_process
+    await interaction.response.defer()
+
+    if server_process is None or server_process.poll() is not None:
+        await interaction.followup.send("Le serveur n'est pas en cours d'exécution.")
+        return
+
+    try:
+        server_process.terminate()
+        server_process.wait()
+        server_process = None
+        await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+    except Exception as e:
+        await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
+
+@bot.tree.command(name="restart_minecraft", description="Redémarre le serveur Minecraft.")
+async def restart_minecraft(interaction: discord.Interaction):
+    await interaction.response.defer()
+    await stop_minecraft(interaction)
+    await asyncio.sleep(5)  # Attendre un moment avant de redémarrer
+    await start_minecraft(interaction)
 
 @bot.event
 async def on_ready():
