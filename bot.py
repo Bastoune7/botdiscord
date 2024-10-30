@@ -47,7 +47,7 @@ server_process = None
 # Fonction pour lire les premières lignes du log du serveur
 async def monitor_server_logs(interaction):
     await asyncio.sleep(5)  # Temps pour le serveur de démarrer la création de logs
-    log_file = os.path.join(os.path.dirname(SERVER_PATH), "logs", "latest.log")
+    log_file = os.path.join("logs", "latest.log")
 
     # Lire les premières lignes jusqu'à "Done"
     async with interaction.channel.typing():
