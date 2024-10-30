@@ -103,4 +103,4 @@ async def untg_command(interaction: discord.Interaction, member: discord.Member)
 
     await interaction.response.send_message(f"{member.mention} Je t'ai remis la connexion mais fais gaffe à toi, sinon Thanatos se met en colère")
 
-bot.run('')
+bot.run(TOKEN)
