@@ -14,10 +14,6 @@ from pile_ou_face import pile_ou_face
 with open("config.txt", "r") as file:
     TOKEN = file.read().strip()
 
-# Charger le chemin du serveur depuis server_path.txt
-with open("server_path.txt", "r") as file:
-    SERVER_PATH = file.read().strip()
-
 # Initialiser le bot et les intents
 intents = discord.Intents.default()
 intents.messages = True
