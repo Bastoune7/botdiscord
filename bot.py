@@ -44,12 +44,14 @@ def log_event(event_name, reason=""):
 server_process = None
 
 # Fonction pour démarrer le serveur Minecraft dans un sous-processus
-def start_minecraft_server():
+async def start_minecraft_server():
     global server_process
     try:
-        # Démarrer le serveur avec le chemin correct pour Windows
-        server_process = subprocess.Popen(
-            ["start", "powershell", "-NoExit", "-Command", ".\\start_server.bat"],
+        # Utiliser asyncio.create_subprocess_shell pour le lancement asynchrone
+        server_process = await asyncio.create_subprocess_shell(
+            "start powershell -NoExit -Command .\\start_server.bat",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
             shell=True
         )
         asyncio.create_task(monitor_logs())  # Surveiller les logs de façon asynchrone
@@ -60,12 +62,12 @@ def start_minecraft_server():
 async def monitor_logs():
     if server_process.stdout:
         while True:
-            line = await asyncio.to_thread(server_process.stdout.readline)
+            line = await server_process.stdout.readline()
             if not line:
                 break
-            log_queue.put(line.strip())  # Enqueue chaque ligne de log
-            print(line.strip())  # Affiche les logs en console
-            await asyncio.sleep(1)  # Pause pour éviter un usage CPU excessif
+            log_queue.put(line.decode().strip())  # Convertir en texte et ajouter à la file d'attente
+            print(line.decode().strip())
+            await asyncio.sleep(0.1)  # Pause courte pour éviter une surcharge CPU
 
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
@@ -100,14 +102,17 @@ async def start_minecraft(interaction: discord.Interaction):
 
 # Fonction pour arrêter le serveur Minecraft
 @bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
-async def stop_minecraft(interaction: discord.Interaction):
+async def stop_minecraft(interaction):
     global server_process
     await interaction.response.defer()
 
     if server_process is not None and server_process.poll() is None:
         try:
-            subprocess.Popen("echo stop | powershell -NoExit", shell=True)  # Envoie "stop" en commande
+            # Envoyer la commande "stop" au serveur
+            server_process.stdin.write("stop\n".encode())
+            await server_process.stdin.drain()
             await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+            await server_process.wait()
             server_process = None  # Réinitialiser le processus
         except Exception as e:
             await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
