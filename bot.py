@@ -111,10 +111,10 @@ async def stop_minecraft(interaction: discord.Interaction):
         return
 
     try:
-        server_process.terminate()
-        server_process.wait()
+        server_process.kill()  # Forcer l'arrêt du serveur Minecraft
+        server_process.wait()  # Attendre la terminaison du processus
         server_process = None  # Réinitialiser `server_process` pour éviter les erreurs lors du redémarrage
-        await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+        await interaction.followup.send("Le serveur Minecraft a été arrêté avec succès. 🛑")
     except Exception as e:
         await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
 
