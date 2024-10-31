@@ -9,6 +9,7 @@ import sys
 import subprocess
 import os
 from pile_ou_face import pile_ou_face
+from mcstatus import MinecraftServer
 
 # Charger le token depuis config.txt
 with open("config.txt", "r") as file:
@@ -50,9 +51,6 @@ def start_minecraft_server():
         server_process = subprocess.Popen(
             ["start_server.bat"],
             creationflags=CREATE_NEW_CONSOLE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,  # Redirection de l'entrée standard
             text=True
         )
     except Exception as e:
@@ -111,28 +109,20 @@ async def stop_minecraft_server(interaction: discord.Interaction):
     global server_process
     await interaction.response.send_message("Arrêt du serveur Minecraft en cours...")
 
-    # Vérifier si le processus du serveur est actif
     if server_process is not None and server_process.poll() is None:
         try:
-            if server_process.stdin is not None:  # Vérifie que stdin est valide
+            if server_process.stdin is not None:
                 server_process.stdin.write('stop\n')  # Envoie la commande 'stop'
                 server_process.stdin.flush()
-                await interaction.followup.send("Commande d'arrêt envoyée au serveur.")
+
+                # Attendre que le serveur se ferme
+                server_process.wait()  # Attend la fin du processus
+                await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+                server_process = None  # Réinitialiser server_process
             else:
                 await interaction.followup.send("Erreur : Impossible d'envoyer la commande au serveur.")
         except Exception as e:
             await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
-            return
-
-        # Attendre le message 'shutting-down'
-        for _ in range(10):
-            await asyncio.sleep(1)  # Vérifie chaque seconde
-            if server_process.poll() is not None:
-                await interaction.followup.send("Le serveur Minecraft a été arrêté.")
-                server_process = None  # Réinitialiser server_process
-                return
-
-        await interaction.followup.send("Le serveur n'a pas répondu à la commande d'arrêt.")
     else:
         await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
 
@@ -144,15 +134,21 @@ async def restart_minecraft(interaction: discord.Interaction):
     await asyncio.sleep(5)  # Attendre un moment avant de redémarrer
     await start_minecraft(interaction)
 
-# Commande pour vérifier l'état du serveur Minecraft
 @bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
 async def check_minecraft(interaction: discord.Interaction):
     await interaction.response.defer()
 
     if server_process is None or server_process.poll() is not None:
         await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
-    else:
+        return
+
+    # Vérification de la connexion au serveur
+    try:
+        server = MinecraftServer("localhost", 10586)  # Assurez-vous d'utiliser l'IP et le port corrects
+        status = server.status()  # Cette méthode va lancer une requête au serveur
         await interaction.followup.send("Le serveur Minecraft est en cours d'exécution et est en ligne ! 🟢")
+    except Exception as e:
+        await interaction.followup.send(f"Le serveur ne semble pas en ligne : {str(e)}")
 
 
 @bot.event
