@@ -72,7 +72,7 @@ async def monitor_logs():
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
     while True:
-        log_line = await log_queue.get()  
+        log_line = await log_queue.get()
         if "Done" in log_line:
             await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
             break
