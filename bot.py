@@ -23,7 +23,6 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 # Dictionnaire pour garder la trace des tâches de mute actives
 mute_tasks = {}
 
-
 # Fonction pour enregistrer les logs des commandes
 def log_command(command_name, user, args, success=True):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -32,20 +31,28 @@ def log_command(command_name, user, args, success=True):
         log_file.write(
             f"[{timestamp}] Commande: {command_name}, Utilisateur: {user}, Arguments: {args}, Statut: {status}\n")
 
-
 # Fonction pour log au démarrage et à l'arrêt
 def log_event(event_name, reason=""):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("log.txt", "a") as log_file:
         log_file.write(f"[{timestamp}] Événement: {event_name}, Raison: {reason}\n")
 
-
 # Dictionnaire pour garder la trace du processus du serveur
 server_process = None
 
+# Fonction pour démarrer le serveur Minecraft dans un sous-processus
+def start_minecraft_server():
+    global server_process
+    server_process = subprocess.Popen(
+        ["start", "powershell", "-Command", "start_server.bat"],
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
 
 async def monitor_server_logs(interaction):
-    if server_process.stdout is None:
+    if server_process is None or server_process.stdout is None:
         await interaction.followup.send("Impossible de lire les logs du serveur.")
         return
 
@@ -68,7 +75,6 @@ async def monitor_server_logs(interaction):
             error_logs = ''.join(logs)  # Joindre tous les logs en une seule chaîne
             await interaction.followup.send(f"Le serveur a échoué à démarrer. Logs:\n{error_logs}")
 
-
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
     global server_process
@@ -79,19 +85,13 @@ async def start_minecraft(interaction: discord.Interaction):
         return
 
     try:
-        server_process = subprocess.Popen(
-            ["cmd.exe", "/K", "start_server.bat"],
-            stdout=subprocess.PIPE,  # Redirection de la sortie standard pour capturer les logs
-            stderr=subprocess.STDOUT,  # Redirection des erreurs vers la sortie standard
-            text=True  # Assure que les lignes sont lues en tant que texte
-        )
+        start_minecraft_server()  # Démarrer le serveur Minecraft
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
         # Lancer une tâche pour surveiller les logs et envoyer un message quand le serveur est prêt
         asyncio.create_task(monitor_server_logs(interaction))
     except Exception as e:
         await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
-
 
 @bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
 async def stop_minecraft(interaction: discord.Interaction):
@@ -105,7 +105,7 @@ async def stop_minecraft(interaction: discord.Interaction):
     try:
         server_process.terminate()
         server_process.wait()
-        server_process = None
+        server_process = None  # Réinitialiser `server_process` pour éviter les erreurs lors du redémarrage
         await interaction.followup.send("Le serveur Minecraft a été arrêté.")
     except Exception as e:
         await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
