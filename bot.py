@@ -115,7 +115,7 @@ async def stop_minecraft_server(interaction: discord.Interaction):
     if server_process is not None and server_process.poll() is None:
         try:
             if server_process.stdin is not None:  # Vérifie que stdin est valide
-                server_process.stdin.write(b'stop\n')  # Envoie la commande 'stop'
+                server_process.stdin.write('stop\n')  # Envoie la commande 'stop'
                 server_process.stdin.flush()
                 await interaction.followup.send("Commande d'arrêt envoyée au serveur.")
             else:
