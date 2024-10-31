@@ -102,7 +102,9 @@ async def start_minecraft(interaction: discord.Interaction):
         await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
 
 @bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
-async def stop_minecraft_server():
+async def stop_minecraft_server(interaction: discord.Interaction):
+    # Votre code pour arrêter le serveur Minecraft
+    await interaction.response.send_message("Arrêt du serveur Minecraft en cours...")
     process = server_process  # Remplacez cela par la référence correcte du processus serveur
     if process and process.poll() is None:  # Vérifie si le serveur est en cours d'exécution
         process.stdin.write(b'stop\n')  # Envoie la commande 'stop' au serveur
