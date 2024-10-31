@@ -44,15 +44,15 @@ server_process = None
 def start_minecraft_server():
     global server_process
     try:
-        # Constants pour les flags Windows
+        # Définir les constantes
         CREATE_NEW_CONSOLE = 0x00000010
+        # Démarrer le serveur dans une nouvelle fenêtre de console
         server_process = subprocess.Popen(
             ["start_server.bat"],
-            shell=True,
+            creationflags=CREATE_NEW_CONSOLE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            creationflags=CREATE_NEW_CONSOLE  # Ceci va créer une nouvelle console  
+            stderr=subprocess.PIPE,
+            text=True
         )
     except Exception as e:
         print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
@@ -107,28 +107,28 @@ async def start_minecraft(interaction: discord.Interaction):
 
 @bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
 async def stop_minecraft_server(interaction: discord.Interaction):
-    global server_process  # Accéder à la variable globale
+    global server_process
     await interaction.response.send_message("Arrêt du serveur Minecraft en cours...")
 
-    # Vérifie si le processus du serveur est actif et possède un flux d'entrée
-    if server_process is not None and server_process.poll() is None and server_process.stdin is not None:
-        server_process.stdin.write(b'stop\n')  # Envoie la commande 'stop' au serveur
-        server_process.stdin.flush()
+    # Vérifier si le processus du serveur est actif
+    if server_process is not None and server_process.poll() is None:
+        try:
+            server_process.stdin.write(b'stop\n')  # Envoie la commande 'stop'
+            server_process.stdin.flush()
+            await interaction.followup.send("Commande d'arrêt envoyée au serveur.")
+        except Exception as e:
+            await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
+            return
 
-        # Attendre le message 'shutting-down' dans les logs
-        await asyncio.sleep(1)  # Attendre brièvement pour laisser le message apparaître
-        for _ in range(10):  # Vérifie toutes les secondes pendant 10 secondes
-            if server_process.stdout:
-                line = server_process.stdout.readline()
-                if "shutting-down" in line:
-                    print("Serveur Minecraft correctement arrêté.")
-                    break
-            await asyncio.sleep(1)
-        else:
-            print("Le serveur Minecraft ne s'est pas arrêté correctement après 10 secondes.")
+        # Attendre le message 'shutting-down'
+        for _ in range(10):
+            await asyncio.sleep(1)  # Vérifie chaque seconde
+            if server_process.poll() is not None:
+                await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+                server_process = None  # Réinitialiser server_process
+                return
 
-        # Réinitialiser server_process après l'arrêt
-        server_process = None
+        await interaction.followup.send("Le serveur n'a pas répondu à la commande d'arrêt.")
     else:
         await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
 
