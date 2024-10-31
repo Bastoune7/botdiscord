@@ -72,14 +72,13 @@ async def monitor_logs():
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
     while True:
-        log_line = log_queue.get()  # Récupère la ligne de log depuis la file d'attente
+        log_line = await log_queue.get()  
         if "Done" in log_line:
             await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
             break
         elif "Error" in log_line or "Exception" in log_line:
             await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
             break
-        await asyncio.sleep(1)
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
