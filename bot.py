@@ -52,6 +52,7 @@ def start_minecraft_server():
             creationflags=CREATE_NEW_CONSOLE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,  # Redirection de l'entrée standard
             text=True
         )
     except Exception as e:
@@ -113,9 +114,12 @@ async def stop_minecraft_server(interaction: discord.Interaction):
     # Vérifier si le processus du serveur est actif
     if server_process is not None and server_process.poll() is None:
         try:
-            server_process.stdin.write(b'stop\n')  # Envoie la commande 'stop'
-            server_process.stdin.flush()
-            await interaction.followup.send("Commande d'arrêt envoyée au serveur.")
+            if server_process.stdin is not None:  # Vérifie que stdin est valide
+                server_process.stdin.write(b'stop\n')  # Envoie la commande 'stop'
+                server_process.stdin.flush()
+                await interaction.followup.send("Commande d'arrêt envoyée au serveur.")
+            else:
+                await interaction.followup.send("Erreur : Impossible d'envoyer la commande au serveur.")
         except Exception as e:
             await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
             return
