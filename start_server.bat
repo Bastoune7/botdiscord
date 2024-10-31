@@ -6,4 +6,4 @@ java -jar server.jar nogui
 
 pause
 
-exit
+end
