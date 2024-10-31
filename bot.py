@@ -47,26 +47,25 @@ server_process = None
 def start_minecraft_server():
     global server_process
     try:
-        # Démarrer le serveur dans une nouvelle fenêtre PowerShell
+        # Démarrer le serveur avec le chemin correct pour Windows
         server_process = subprocess.Popen(
-            ["start", "powershell", "-NoExit", "-Command", "start_server.bat"],
+            ["start", "powershell", "-NoExit", "-Command", ".\\start_server.bat"],
             shell=True
         )
-        asyncio.create_task(monitor_server_logs())  # Démarre la surveillance des logs
+        asyncio.create_task(monitor_logs())  # Surveiller les logs de façon asynchrone
     except Exception as e:
         print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
 
+# Fonction asynchrone pour surveiller les logs sans bloquer le bot
 async def monitor_logs():
-    while True:
-        if server_process.stdout:
+    if server_process.stdout:
+        while True:
             line = await asyncio.to_thread(server_process.stdout.readline)
-            if line:
-                log_queue.put(line.strip())  # Stocke chaque ligne lue
-                print(line.strip())  # Affiche dans la console
-        else:
-            break
-
-        await asyncio.sleep(1)  # Petite pause pour éviter une surcharge CPU
+            if not line:
+                break
+            log_queue.put(line.strip())  # Enqueue chaque ligne de log
+            print(line.strip())  # Affiche les logs en console
+            await asyncio.sleep(1)  # Pause pour éviter un usage CPU excessif
 
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
