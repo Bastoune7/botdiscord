@@ -45,7 +45,7 @@ def start_minecraft_server():
     global server_process
     try:
         server_process = subprocess.Popen(
-            ["cmd.exe", "/K", "start_server.bat"],
+            ["start_server.bat"],
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
