@@ -102,21 +102,22 @@ async def start_minecraft(interaction: discord.Interaction):
         await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
 
 @bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
-async def stop_minecraft(interaction: discord.Interaction):
-    global server_process
-    await interaction.response.defer()
+async def stop_minecraft_server():
+    process = server_process  # Remplacez cela par la référence correcte du processus serveur
+    if process and process.poll() is None:  # Vérifie si le serveur est en cours d'exécution
+        process.stdin.write(b'stop\n')  # Envoie la commande 'stop' au serveur
+        process.stdin.flush()
 
-    if server_process is None or server_process.poll() is not None:
-        await interaction.followup.send("Le serveur n'est pas en cours d'exécution.")
-        return
-
-    try:
-        server_process.kill()  # Forcer l'arrêt du serveur Minecraft
-        server_process.wait()  # Attendre la terminaison du processus
-        server_process = None  # Réinitialiser `server_process` pour éviter les erreurs lors du redémarrage
-        await interaction.followup.send("Le serveur Minecraft a été arrêté avec succès. 🛑")
-    except Exception as e:
-        await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
+        # Attendre le message 'shutting-down' dans les logs
+        await asyncio.sleep(1)  # Attendez brièvement pour laisser le message apparaître
+        for _ in range(10):  # Vérifie toutes les secondes pendant 10 secondes
+            line = process.stdout.readline().decode()
+            if "shutting-down" in line:
+                print("Serveur Minecraft correctement arrêté.")
+                break
+            await asyncio.sleep(1)
+        else:
+            print("Le serveur Minecraft ne s'est pas arrêté correctement après 10 secondes.")
 
 
 @bot.tree.command(name="restart_minecraft", description="Redémarre le serveur Minecraft.")
