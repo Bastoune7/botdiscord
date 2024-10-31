@@ -82,6 +82,7 @@ async def monitor_server_logs(interaction):
         await asyncio.sleep(1)
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
+@bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
     global server_process
     await interaction.response.defer()
@@ -91,11 +92,12 @@ async def start_minecraft(interaction: discord.Interaction):
         return
 
     try:
-        start_minecraft_server()
+        # Ajout de await ici pour éviter le RuntimeWarning
+        await start_minecraft_server()
         await interaction.followup.send("Démarrage du serveur Minecraft...")
 
-        # Surveiller les logs et confirmer le démarrage
-        asyncio.create_task(monitor_server_logs(interaction))
+        # Utilisation de asyncio.create_task avec await pour lancer la surveillance des logs
+        await asyncio.create_task(monitor_server_logs(interaction))
     except Exception as e:
         await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
 
