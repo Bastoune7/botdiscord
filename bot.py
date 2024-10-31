@@ -44,12 +44,15 @@ server_process = None
 def start_minecraft_server():
     global server_process
     try:
+        # Constants pour les flags Windows
+        CREATE_NEW_CONSOLE = 0x00000010
         server_process = subprocess.Popen(
             ["start_server.bat"],
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            creationflags=CREATE_NEW_CONSOLE  # Ceci va créer une nouvelle console  
         )
     except Exception as e:
         print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
