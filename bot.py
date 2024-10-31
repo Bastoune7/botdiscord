@@ -43,13 +43,17 @@ server_process = None
 # Fonction pour démarrer le serveur Minecraft dans un sous-processus
 def start_minecraft_server():
     global server_process
-    server_process = subprocess.Popen(
-        ["start", "powershell", "-Command", "start_server.bat"],
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
+    try:
+        server_process = subprocess.Popen(
+            ["cmd.exe", "/K", "start_server.bat"],
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+    except Exception as e:
+        print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
+
 
 async def monitor_server_logs(interaction):
     if server_process is None or server_process.stdout is None:
@@ -67,6 +71,10 @@ async def monitor_server_logs(interaction):
             if "Done" in line:  # Si le serveur est prêt
                 await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
                 return  # Quitter la fonction si le serveur a démarré correctement
+
+            if "Error" in line or "Exception" in line:
+                await interaction.followup.send(f"Erreur détectée dans le log : {line}")
+                break
 
             await asyncio.sleep(1)
 
