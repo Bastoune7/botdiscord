@@ -82,7 +82,6 @@ async def monitor_server_logs(interaction):
         await asyncio.sleep(1)
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
-@bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
     global server_process
     await interaction.response.defer()
