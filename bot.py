@@ -57,13 +57,18 @@ async def start_minecraft_server():
         print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
 
 async def monitor_logs():
+    global server_process
     if server_process.stdout:
         while True:
-            line = await server_process.stdout.readline()
-            if not line:
+            log_line = await server_process.stdout.readline()
+            if not log_line:
                 break
-            await log_queue.put(line.decode().strip())
-            print(line.decode().strip())
+            log_message = log_line.decode("utf-8").strip()
+            await log_queue.put(log_message)
+            print(log_message)
+            if "Done" in log_message:
+                print("Serveur Minecraft démarré avec succès !")
+                break
             await asyncio.sleep(0.1)
 
 async def monitor_server_logs(interaction):
@@ -127,10 +132,6 @@ async def restart_minecraft(interaction: discord.Interaction):
 @bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
 async def check_minecraft(interaction: discord.Interaction):
     await interaction.response.defer()
-
-    if server_process is None or server_process.returncode is not None:
-        await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
-        return
 
     try:
         server = MinecraftServer("localhost", 10586)
