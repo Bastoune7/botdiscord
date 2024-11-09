@@ -23,6 +23,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Dictionnaires et file d'attente pour la gestion des tâches et des logs
+bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
 server_process = None  # Processus du serveur Minecraft
@@ -102,7 +103,7 @@ async def stop_minecraft(interaction):
                 server_process = None
             else:
                 # Si `server_process` n'est pas défini, on suppose que le serveur est lancé indépendamment
-                await interaction.followup.send("🛑 Oups... Le serveur minecraft a été lancé avant que je ne sois moi même lancé... Ce qui signifie que je ne suis pas en mesure de l'arrêter puisque ça n'est pas moi qui ai lancé le serveur ! Envoie un message à Bastien pour qu'il règle ça ou connecte toi en RCON au serveur pour accéder à ces fonctionnalités sans m'utiliser 😉")
+                await interaction.followup.send("🛑 Oups... Le serveur minecraft a été lancé avant que je ne sois moi même lancé... Ce qui signifie que je ne suis pas en mesure de l'arrêter puisque ça n'est pas moi qui ai lancé le serveur ! Envoie un message à {bastien_mention} pour qu'il règle ça ou connecte toi en RCON au serveur pour accéder à ces fonctionnalités sans m'utiliser 😉")
                 # Envoyez la commande "stop" via une requête réseau ou d'autres moyens configurés pour le serveur
                 # Par exemple, en utilisant RCON si configuré sur le serveur Minecraft
                 # TODO: Ajoutez ici une requête réseau ou via un script pour stopper le serveur externe
