@@ -82,21 +82,36 @@ async def monitor_server_logs(interaction):
             await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
             break
 
+
 async def stop_minecraft(interaction):
-    global server_process
     await interaction.response.defer()
 
-    if server_process is not None and server_process.poll() is None:
-        try:
-            server_process.stdin.write("stop\n".encode())
-            await server_process.stdin.drain()
-            await interaction.followup.send("Le serveur Minecraft a été arrêté.")
-            await server_process.wait()
-            server_process = None
-        except Exception as e:
-            await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
-    else:
-        await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
+    try:
+        # Vérifier si le serveur Minecraft est en ligne
+        server = MinecraftServer("localhost", 10586)  # Remplacez par l'IP et le port de votre serveur
+        status = server.status()  # Si le serveur est en ligne, cette ligne renvoie un statut
+
+        # Si le serveur est en ligne, on tente de l'arrêter
+        if status:
+            global server_process
+            if server_process is not None and server_process.stdin:
+                server_process.stdin.write("stop\n".encode())
+                await server_process.stdin.drain()
+                await interaction.followup.send("Le serveur Minecraft a été arrêté.")
+                await server_process.wait()
+                server_process = None
+            else:
+                # Si `server_process` n'est pas défini, on suppose que le serveur est lancé indépendamment
+                await interaction.followup.send("🛑 Oups... Le serveur minecraft a été lancé avant que je ne sois moi même lancé... Ce qui signifie que je ne suis pas en mesure de l'arrêter puisque ça n'est pas moi qui ai lancé le serveur ! Envoie un message à Bastien pour qu'il règle ça ou connecte toi en RCON au serveur pour accéder à ces fonctionnalités sans m'utiliser 😉")
+                # Envoyez la commande "stop" via une requête réseau ou d'autres moyens configurés pour le serveur
+                # Par exemple, en utilisant RCON si configuré sur le serveur Minecraft
+                # TODO: Ajoutez ici une requête réseau ou via un script pour stopper le serveur externe
+
+        else:
+            await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
+
+    except Exception as e:
+        await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
 
 ### Commandes de gestion du serveur Minecraft ###
 
