@@ -69,16 +69,13 @@ async def monitor_logs():
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
     while True:
-        try:
-            log_line = await log_queue.get()
-            if "Done" in log_line:
-                await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
-                break
-            elif "Error" in log_line or "Exception" in log_line:
-                await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
-                break
-        except asyncio.QueueEmpty:
-            await asyncio.sleep(0.1) # Pause pour éviter le blocage sans log
+        log_line = await log_queue.get()
+        if "Done" in log_line:
+            await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
+            break
+        elif "Error" in log_line or "Exception" in log_line:
+            await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
+            break
 
 async def stop_minecraft(interaction):
     global server_process
@@ -103,10 +100,12 @@ async def start_minecraft(interaction: discord.Interaction):
     global server_process
     await interaction.response.defer()
 
-    if server_process is not None and server_process.poll() is None:
+    # Check if server was not already started (ouais je parle en anglais maintenant)
+    if server_process is not None and server_process.returncode is None:
         await interaction.followup.send("Le serveur est déjà en cours d'exécution !")
         return
 
+    #Start the server and check the log (asynchrone)
     try:
         await start_minecraft_server()
         await interaction.followup.send("Démarrage du serveur Minecraft...")
@@ -129,7 +128,7 @@ async def restart_minecraft(interaction: discord.Interaction):
 async def check_minecraft(interaction: discord.Interaction):
     await interaction.response.defer()
 
-    if server_process is None or server_process.poll() is not None:
+    if server_process is None or server_process.returncode is not None:
         await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
         return
 
