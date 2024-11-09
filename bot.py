@@ -24,7 +24,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Dictionnaires et file d'attente pour la gestion des tâches et des logs
 mute_tasks = {}
-log_queue = Queue()
+log_queue = asyncio.Queue()
 server_process = None  # Processus du serveur Minecraft
 
 ### Fonctions de journalisation ###
@@ -62,20 +62,23 @@ async def monitor_logs():
             line = await server_process.stdout.readline()
             if not line:
                 break
-            log_queue.put(line.decode().strip())
+            await log_queue.put(line.decode().strip())
             print(line.decode().strip())
             await asyncio.sleep(0.1)
 
 async def monitor_server_logs(interaction):
     await interaction.followup.send("Surveillance des logs du serveur...")
     while True:
-        log_line = await log_queue.get()
-        if "Done" in log_line:
-            await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
-            break
-        elif "Error" in log_line or "Exception" in log_line:
-            await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
-            break
+        try:
+            log_line = await log_queue.get()
+            if "Done" in log_line:
+                await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
+                break
+            elif "Error" in log_line or "Exception" in log_line:
+                await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
+                break
+        except asyncio.QueueEmpty:
+            await asyncio.sleep(0.1) # Pause pour éviter le blocage sans log
 
 async def stop_minecraft(interaction):
     global server_process
