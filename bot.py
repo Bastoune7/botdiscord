@@ -68,7 +68,7 @@ async def monitor_logs():
             await log_queue.put(log_message)
             print(log_message)
             if "Done" in log_message:
-                print("Serveur Minecraft démarré avec succès !")
+                print("Serveur Minecraft lancé avec succès !")
                 break
             await asyncio.sleep(0.1)
 
@@ -80,7 +80,7 @@ async def monitor_server_logs(interaction):
             await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
             break
         elif "Error" in log_line or "Exception" in log_line:
-            await interaction.followup.send(f"Erreur détectée dans le log : {log_line}")
+            await interaction.followup.send(f" 🔴 Erreur détectée dans le log : {log_line}")
             break
 
 
@@ -103,16 +103,16 @@ async def stop_minecraft(interaction):
                 server_process = None
             else:
                 # Si `server_process` n'est pas défini, on suppose que le serveur est lancé indépendamment
-                await interaction.followup.send(f"🛑 Oups... Le serveur minecraft a été lancé avant que je ne sois moi même lancé... Ce qui signifie que je ne suis pas en mesure de l'arrêter puisque ça n'est pas moi qui ai lancé le serveur ! Envoie un message à {bastien_mention} pour qu'il règle ça ou connecte toi en RCON au serveur pour accéder à ces fonctionnalités sans m'utiliser 😉")
+                await interaction.followup.send(f"🛑 Oups... Le serveur minecraft a été lancé avant mon propre lancement... Je n'ai donc pas la main sur le serveur ! Comme je ne pourrais pas t'aider, demande à {bastien_mention} de t'aider à accéder aux fonctionnalités !")
                 # Envoyez la commande "stop" via une requête réseau ou d'autres moyens configurés pour le serveur
                 # Par exemple, en utilisant RCON si configuré sur le serveur Minecraft
                 # TODO: Ajoutez ici une requête réseau ou via un script pour stopper le serveur externe
 
         else:
-            await interaction.followup.send("Le serveur Minecraft n'est pas en cours d'exécution.")
+            await interaction.followup.send("💤Le serveur Minecraft n'est pas en cours d'exécution.")
 
     except Exception as e:
-        await interaction.followup.send(f"Erreur lors de l'arrêt du serveur : {str(e)}")
+        await interaction.followup.send(f"⚠️ Erreur lors de l'arrêt du serveur : {str(e)}")
 
 ### Commandes de gestion du serveur Minecraft ###
 
@@ -123,7 +123,7 @@ async def start_minecraft(interaction: discord.Interaction):
 
     # Check if server was not already started (ouais je parle en anglais maintenant)
     if server_process is not None and server_process.returncode is None:
-        await interaction.followup.send("Le serveur est déjà en cours d'exécution !")
+        await interaction.followup.send("‼️Le serveur est déjà en cours d'exécution !")
         return
 
     #Start the server and check the log (asynchrone)
@@ -152,9 +152,9 @@ async def check_minecraft(interaction: discord.Interaction):
     try:
         server = MinecraftServer("localhost", 10586)
         status = server.status()
-        await interaction.followup.send("Le serveur Minecraft est en cours d'exécution et est en ligne ! 🟢")
+        await interaction.followup.send("🟢 Le serveur Minecraft est en ligne !")
     except Exception as e:
-        await interaction.followup.send(f"Le serveur ne semble pas en ligne : {str(e)}")
+        await interaction.followup.send(f"🔴 Le serveur ne semble pas en ligne : {str(e)}")
 
 ### Commandes et événements de bot ###
 
@@ -174,7 +174,7 @@ async def on_message(message):
     elif "pong" in message.content.lower():
         await message.channel.send("Bon tg")
     elif "joris" in message.content.lower():
-        await message.reply("Qu'il repose en paix 🪦😢")
+        await message.reply("Oh mon pepscen d'amour 🥰")
     elif any(phrase in message.content.lower() for phrase in ["ta gueule", "tagueule", "tg"]):
         await message.reply("Toi ferme la 😡")
 
@@ -195,6 +195,7 @@ async def pileouface_command(interaction: discord.Interaction):
 async def play_command(interaction: discord.Interaction, url: str):
     try:
         await play_music(interaction, url)
+        interaction.response.send_message("Ok j'arrive... 🎵", ephemeral=True)
         log_command("play", interaction.user, [url], success=True)
     except Exception as e:
         await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
@@ -204,6 +205,7 @@ async def play_command(interaction: discord.Interaction, url: str):
 async def stop_command(interaction: discord.Interaction):
     try:
         await stop_music(interaction)
+        interaction.response.send_message("Ok j'arrête ! 🙃", ephemeral=True)
         log_command("stop", interaction.user, [], success=True)
     except Exception as e:
         await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
@@ -225,11 +227,10 @@ async def leave_command(interaction: discord.Interaction):
                        message="Message à envoyer à l'utilisateur")
 async def tg_command(interaction: discord.Interaction, user: discord.Member, duration: int, message: str):
     if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("Vous n'avez pas la permission d'utiliser cette commande.",
-                                                ephemeral=True)
+        await interaction.response.send_message(f"Ah la honte il essaie de /tg {user.mention} alors qu'il est même pas modo 🤣🫵🏻")
         return
 
-    await interaction.response.send_message(f"{user.mention} a été mute pendant {duration} secondes.")
+    await interaction.response.send_message(f"{user.mention} s'est mangé un tg pendant {duration} secondes. 🤫")
     mute_tasks[user.id] = asyncio.create_task(mute_user(user, duration, message))
 
 async def mute_user(user: discord.Member, duration: int, message: str):
@@ -248,9 +249,9 @@ async def untg_command(interaction: discord.Interaction, user: discord.Member):
         mute_tasks[user.id].cancel()
         del mute_tasks[user.id]
         await user.edit(voice_channel=None)
-        await interaction.response.send_message(f"{user.mention} a été démute.")
+        await interaction.response.send_message(f"{user.mention}, ça y est tu as le droit de reparler 😄")
     else:
-        await interaction.response.send_message(f"{user.mention} n'est pas muté.")
+        await interaction.response.send_message(f"{user.mention} n'a pas mangé de tg 🤓")
 
 ### Gestion des signaux et exceptions ###
 
