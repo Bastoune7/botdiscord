@@ -1,8 +1,8 @@
 @echo off
 
-cd "C:\Users\HP2\Desktop\Serveur-Minecraft\STI-serv-2"
+cd "C:\Users\crouxstoune\Documents\minecraft server java"
 
-java -jar server.jar nogui > C:\Users\HP2\Desktop\bot\botdiscord\server.log 2>&1 
+java -jar server.jar nogui > C:\Users\crouxstoune\Documents\project\botdiscord\server.log 2>&1
 
 pause
 
