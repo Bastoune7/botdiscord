@@ -11,6 +11,7 @@ import os
 from pile_ou_face import pile_ou_face
 from mcstatus import MinecraftServer
 from queue import Queue
+import aiofiles
 
 # Charger le token depuis config.txt
 with open("config.txt", "r") as file:
@@ -22,11 +23,13 @@ intents.messages = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Dictionnaires et file d'attente pour la gestion des tâches et des logs
+## VARIABLE GÉNÉRALES
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
 server_process = None  # Processus du serveur Minecraft
+LOG_FILE = "server.log"
+
 
 ### Fonctions de journalisation ###
 
@@ -47,114 +50,133 @@ def log_event(event_name, reason=""):
 async def start_minecraft_server():
     global server_process
     try:
-        server_process = await asyncio.create_subprocess_shell(
-            "start powershell -NoExit -Command .\\start_server.bat",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            shell=True
-        )
-        asyncio.create_task(monitor_logs())
+        # Démarrer le serveur Minecraft
+        with open(LOG_FILE, "w") as log_file:
+            server_process = subprocess.Popen(
+                ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"],
+                stdout=log_file,
+                stderr=log_file,
+                shell=True
+            )
+        return True
     except Exception as e:
-        print(f"Erreur lors du lancement du serveur Minecraft : {str(e)}")
+        print(f"Erreur lors du démarrage du serveur : {e}")
+        return False
+
+async def stop_minecraft_server():
+    """Arrête le serveur Minercaft en envoyant la commande 'stop'"""
+    global server_process
+    try:
+        if server_process and server_process.poll() is None:
+            server_process.terminate()
+            server_process.wait()
+            server_process = None
+            return True
+        return False
+    except Exception as e:
+        print(f"Erreur lors de l'arrêt du serveur : {e}")
+        return False
+
+async def check_minecraft_status():
+    """Vérifie si le serveur Minecraft est en ligne."""
+    try:
+        server = MinecraftServer("localhost", 10586)
+        status = server.status()
+        return True, status
+    except Exception as e:
+        return False, str(e)
 
 async def monitor_logs():
-    global server_process
-    if server_process.stdout:
-        while True:
-            log_line = await server_process.stdout.readline()
-            if not log_line:
-                break
-            log_message = log_line.decode("utf-8").strip()
-            await log_queue.put(log_message)
-            print(log_message)
-            if "Done" in log_message:
-                print("Serveur Minecraft lancé avec succès !")
-                break
-            await asyncio.sleep(0.1)
+    """Surveille les logs de server.log pour l'état"""
+    try:
+        async with aiofiles.open("server.log", mode="r") as log_file:
+            await log_file.seek(0, os.SEEK_END) #Aller à la fin du fichier
+            while True:
+                log_line = await log_file.readline()
+                if not log_line:
+                    await asyncio.sleep(0.1) #Attendre si pas de nouvelles lignes
+                    continue
+
+                log_message = log_line.strip()
+                print(log_message) #Afficher dans la console
+                await log_queue.put(log_message) #Ajouter à la file d'attente
+    except Exception as e:
+        print(f"Erreur lors de la surveillance des logs : {e}")
 
 async def monitor_server_logs(interaction):
+    """Envoie les notifications Discord en fonction des logs."""
     await interaction.followup.send("Surveillance des logs du serveur...")
-    while True:
-        log_line = await log_queue.get()
-        if "Done" in log_line:
-            await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
-            break
-        elif "Error" in log_line or "Exception" in log_line:
-            await interaction.followup.send(f" 🔴 Erreur détectée dans le log : {log_line}")
-            break
-
-
-async def stop_minecraft(interaction):
-    await interaction.response.defer()
-
     try:
-        # Vérifier si le serveur Minecraft est en ligne
-        server = MinecraftServer("localhost", 10586)  # Remplacez par l'IP et le port de votre serveur
-        status = server.status()  # Si le serveur est en ligne, cette ligne renvoie un statut
-
-        # Si le serveur est en ligne, on tente de l'arrêter
-        if status:
-            global server_process
-            if server_process is not None and server_process.stdin:
-                server_process.stdin.write("stop\n".encode())
-                await server_process.stdin.drain()
-                await interaction.followup.send("Le serveur Minecraft a été arrêté.")
-                await server_process.wait()
-                server_process = None
-            else:
-                # Si `server_process` n'est pas défini, on suppose que le serveur est lancé indépendamment
-                await interaction.followup.send(f"🛑 Oups... Le serveur minecraft a été lancé avant mon propre lancement... Je n'ai donc pas la main sur le serveur ! Comme je ne pourrais pas t'aider, demande à {bastien_mention} de t'aider à accéder aux fonctionnalités !")
-                # Envoyez la commande "stop" via une requête réseau ou d'autres moyens configurés pour le serveur
-                # Par exemple, en utilisant RCON si configuré sur le serveur Minecraft
-                # TODO: Ajoutez ici une requête réseau ou via un script pour stopper le serveur externe
-
-        else:
-            await interaction.followup.send("💤Le serveur Minecraft n'est pas en cours d'exécution.")
-
+        while True:
+            log_line = await log_queue.get()
+            if "Done" in log_line:
+                await interaction.followup.send("Le serveur Minecraft est maintenant en ligne et accessible ! 🟢")
+                break
+            elif "Error" in log_line or "Exception" in log_line:
+                await interaction.followup.send(f"🔴 Erreur détectée dans le log : {log_line}")
+                break
     except Exception as e:
-        await interaction.followup.send(f"⚠️ Erreur lors de l'arrêt du serveur : {str(e)}")
+        await interaction.followup.send(f"Erreur lors de la surveillance des logs : {e}")
 
 ### Commandes de gestion du serveur Minecraft ###
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
-    global server_process
-    await interaction.response.defer()
-
-    # Check if server was not already started (ouais je parle en anglais maintenant)
-    if server_process is not None and server_process.returncode is None:
-        await interaction.followup.send("‼️Le serveur est déjà en cours d'exécution !")
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("🚫 Vous n'avez pas les permissions pour exécuter cette commande.")
         return
 
-    #Start the server and check the log (asynchrone)
-    try:
-        await start_minecraft_server()
-        await interaction.followup.send("Démarrage du serveur Minecraft...")
-        await asyncio.create_task(monitor_server_logs(interaction))
-    except Exception as e:
-        await interaction.followup.send(f"Erreur lors du démarrage du serveur : {str(e)}")
+    await interaction.response.defer()
+    success = await start_minecraft_server()
+    if success:
+        await interaction.followup.send("✅ Serveur Minecraft démarré avec succès.")
+        log_command("start_minecraft", interaction.user, [], success=True)
 
-@bot.tree.command(name="stop_minecraft", description="Arrête le serveur Minecraft.")
-async def stop_minecraft_command(interaction):
-    await stop_minecraft(interaction)
+    else:
+        await interaction.followup.send("❌ Échec du démarrage du serveur Minecraft.")
+        log_command("start_minecraft", interaction.user, [], success=False)
+
+@bot.tree.command(name="stop_minecraft", description="Arrête le serveur minecraft.")
+async def stop_minecraft(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("🚫 Vous n'avez pas les permissions pour exécuter cette commande.")
+        return
+    await interaction.response.defer()
+    success = await stop_minecraft_server()
+    if success:
+        await interaction.followup.send("✅ Serveur Minecraft arrêté avec succès.")
+        log_command("stop_minecraft", interaction.user, [], success=True)
+    else:
+        await interaction.followup.send("❌ Échec de l'arrêt du serveur Minecraft.")
+        log_command("stop_minecraft", interaction.user, [], success=False)
 
 @bot.tree.command(name="restart_minecraft", description="Redémarre le serveur Minecraft.")
 async def restart_minecraft(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("🚫 Vous n'avez pas les permissions pour exécuter cette commande.")
+        return
     await interaction.response.defer()
-    await stop_minecraft(interaction)
+    success_stop = await stop_minecraft_server()
     await asyncio.sleep(5)
-    await start_minecraft(interaction)
+    success_start = await start_minecraft_server()
 
-@bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
-async def check_minecraft(interaction: discord.Interaction):
-    await interaction.response.defer()
+    if success_stop and success_start:
+        await interaction.followup.send("✅ Serveur Minecraft redémarré avec succès.")
+        log_command("restart_minecraft", interaction.user, [], success=True)
+    else:
+        await interaction.followup.send("❌ Échec du redémarrage du serveur Minecraft.")
+        log_command("restart_minecraft", interaction.user, [], success=False)
 
-    try:
-        server = MinecraftServer("localhost", 10586)
-        status = server.status()
-        await interaction.followup.send("🟢 Le serveur Minecraft est en ligne !")
-    except Exception as e:
-        await interaction.followup.send(f"🔴 Le serveur ne semble pas en ligne : {str(e)}")
+    @bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
+    async def check_minecraft(interaction: discord.Interaction):
+        await interaction.response.defer()
+        is_online, status = await check_minecraft_status()
+        if is_online:
+            await interaction.followup.send("🟢 Le serveur Minecraft est en ligne !")
+        else:
+            await interaction.followup.send(f"🔴 Le serveur Minecraft est hors ligne. Raison : {status}")
+        log_command("check_minecraft", interaction.user, [], success=is_online)
+
 
 ### Commandes et événements de bot ###
 
@@ -226,11 +248,27 @@ async def leave_command(interaction: discord.Interaction):
 @app_commands.describe(user="L'utilisateur à muter", duration="Durée du mute en secondes",
                        message="Message à envoyer à l'utilisateur")
 async def tg_command(interaction: discord.Interaction, user: discord.Member, duration: int, message: str):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message(f"Ah la honte il essaie de /tg {user.mention} alors qu'il est même pas modo 🤣🫵🏻")
+    # Vérifie si l'utilisateur ciblé est le bot lui-même
+    if user == bot.user:
+        # Redirige le mute vers l'utilisateur ayant exécuté la commande
+        await interaction.response.send_message(
+            f"😏 Oh non, {interaction.user.mention}, tu as essayé de me mute... mais c'est toi qui prends un tg !"
+        )
+        duration = 20  # Fixe la durée à 20 secondes
+        mute_tasks[interaction.user.id] = asyncio.create_task(
+            mute_user(interaction.user, duration, "Ne joue pas avec moi. 😎")
+        )
         return
 
-    await interaction.response.send_message(f"{user.mention} s'est mangé un tg pendant {duration} secondes. 🤫")
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message(
+            f"Ah la honte, {interaction.user.mention} essaie de /tg {user.mention} alors qu'il est même pas modo 🤣🫵🏻"
+        )
+        return
+
+    await interaction.response.send_message(
+        f"{user.mention} s'est mangé un tg pendant {duration} secondes. 🤫"
+    )
     mute_tasks[user.id] = asyncio.create_task(mute_user(user, duration, message))
 
 async def mute_user(user: discord.Member, duration: int, message: str):
