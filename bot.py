@@ -1,13 +1,15 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 from music_player import play_music, stop_music, leave_voice_channel
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import signal
 import sys
 import subprocess
 import os
+import shutil
+import zipfile
 from pile_ou_face import pile_ou_face
 from mcstatus import MinecraftServer
 from queue import Queue
@@ -24,11 +26,16 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 ## VARIABLE GÉNÉRALES
+BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
+SERVER_PATH = "../../minecraft server java"
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
 server_process = None  # Processus du serveur Minecraft
-LOG_FILE = "server.log"
+LOG_FILE = "server.log" #Fichier de log du serveur minecraft
+BOT_LOG_FILE = "log.log" #Fichier de log des événements et commandes du bot
+backup_interval = timedelta(hours=24) #Intervalle par défaut des sauvegardes automatiques
+last_backup_time = None
 
 
 ### Fonctions de journalisation ###
@@ -36,14 +43,20 @@ LOG_FILE = "server.log"
 def log_command(command_name, user, args, success=True):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     status = "Succès" if success else "Échec"
-    with open("log.txt", "a") as log_file:
+    with open(BOT_LOG_FILE, "a") as log_file:
         log_file.write(
             f"[{timestamp}] Commande: {command_name}, Utilisateur: {user}, Arguments: {args}, Statut: {status}\n")
 
 def log_event(event_name, reason=""):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("log.txt", "a") as log_file:
+    with open(BOT_LOG_FILE, "a") as log_file:
         log_file.write(f"[{timestamp}] Événement: {event_name}, Raison: {reason}\n")
+
+# Fonction utilitaire pour écrire simplement dans le log
+def write_simple_log(message):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open(BOT_LOG_FILE, "a") as log:
+        log.write(f"[{timestamp}] {message}\n")
 
 ### Fonctions de gestion du serveur Minecraft ###
 
@@ -118,6 +131,19 @@ async def monitor_server_logs(interaction):
     except Exception as e:
         await interaction.followup.send(f"Erreur lors de la surveillance des logs : {e}")
 
+def get_last_successful_backup_time():
+    if not os.path.exists(BOT_LOG_FILE):
+        return None
+
+    with open(BOT_LOG_FILE, "r") as log:
+        lines = log.readlines()
+
+    for line in reversed(lines):
+        if "Backup completed successfully" in line:
+            timestamp = line.split("]")[0][1:] #Extraction de l'horadatage
+            return datetime.strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+    return None
+
 ### Commandes de gestion du serveur Minecraft ###
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
@@ -177,6 +203,101 @@ async def restart_minecraft(interaction: discord.Interaction):
             await interaction.followup.send(f"🔴 Le serveur Minecraft est hors ligne. Raison : {status}")
         log_command("check_minecraft", interaction.user, [], success=is_online)
 
+        #Commande /backup_now
+        @bot.command()
+        async def backup_now(ctx):
+            global last_backup_time
+
+            if not ctx.author.guild_permissions.administrator:
+                await ctx.send(f"Je suis désolé, mais tu n'as pas la permission de faire une backup. Si besoin tu peux tout de même demander à {bastien_mention}")
+                return
+
+            now = datetime.now()
+            if last_backup_time and now - last_backup_time < timedelta(minutes=5):
+                await ctx.send("Je suis désolé, mais une sauvegarde a été faite il y a moins de 5min. Pour éviter le blinder le serveur de backup je ne vais donc pas l'exécuter. Toutefois si c'est un bug, il faut le signaler.")
+
+            backup_name = f"mc-{now.strftime('%Y-%m-%d').zip}"
+            backup_path = os.path.join(BACKUP_PATH, backup_name)
+
+            try:
+                write_simple_log("Starting backup process...")
+
+                # Création du dossier de sauvegarde si nécessaire
+                os.makedirs(BACKUP_PATH, exist_ok=True)
+
+                #Création de l'archive zip
+                with zipfile.ZipFile(backup_path, 'w') as backup_zip:
+                    for foldername, subfolders, filenames in os.walk(SERVER_PATH):
+                        for filename in filenames:
+                            file_path = os.path.join(foldername, filename)
+                            arcname = os.path.relpath(file_path, SERVER_PATH)
+                            backup_zip.write(file_path, arcname)
+
+                write_simple_log("Backup completed successfully !")
+                last_backup_time = now
+                await ctx.send("Sauvegarde du serveur minecraft effectuée avec succès !")
+
+            except Exception as e:
+                write_simple_log(f"Backup failed: {e}")
+                await ctx.send(f"Échec de la sauvegarde du serveur minecraft. Euh, {bastien_mention} faudrait checker stp 🙃")
+@bot.command()
+async def backup_schedule(ctx, interval_hours: int):
+    if str(ctx.author.mention) != bastien_mention:
+        await ctx.send(f"🫤 Je suis désolé, seul {bastien_mention} peut modifier la planification des sauvegardes du serveur minecraft...")
+
+    global BACKUP_INTERVAL
+    BACKUP_INTERVAL = timedelta(hours=interval_hours)
+    auto_backup.change_interval(seconds=BACKUP_INTERVAL.total_seconds())
+    await ctx.send(f"Planification des sauvegardes modifiée: toutes les {interval_hours} heures.")
+
+@bot.command()
+async def backup_status(ctx):
+    global last_backup_time
+    last_backup_time = get_last_successful_backup_time()
+    status = "non définie" if not last_backup_time else last_backup_time.strftime("%Y-%m-%d %H:%M:%S")
+    await ctx.send(f"Dernière sauvegarde réussie : {status}\nIntervalle des sauvegardes : {BACKUP_INTERVAL}.")
+@bot.command()
+async def disable_backup(ctx):
+    if str(ctx.author.mention) != bastien_mention:
+        await ctx.send(f"🫤 Je suis désolé, seul {bastien_mention} peut désactiver les sauvegardes automatiques.")
+        return
+
+    auto_backup.stop()
+    await ctx.send("Les sauvegardes automatiques ont été désactivées.")
+
+# Tâche automatique pour les sauvegardes
+@tasks.loop(hours=24)
+async def auto_backup():
+    global last_backup_time
+
+    now = datetime.now()
+    if last_backup_time and now - last_backup_time < BACKUP_INTERVAL:
+        return
+
+    backup_name = f"mc-auto-{now.strftime('%Y-%m-%d')}.zip"
+    backup_path = os.path.join(BACKUP_PATH, backup_name)
+
+    try:
+        write_simple_log("Starting automatic backup process.")
+
+        # Création du dossier de sauvegarde si nécessaire
+        os.makedirs(BACKUP_PATH, exist_ok=True)
+
+        # Création de l'archive ZIP
+        with zipfile.ZipFile(backup_path, 'w') as backup_zip:
+            for foldername, subfolders, filenames in os.walk(SERVER_PATH):
+                for filename in filenames:
+                    file_path = os.path.join(foldername, filename)
+                    arcname = os.path.relpath(file_path, SERVER_PATH)
+                    backup_zip.write(file_path, arcname)
+
+        write_simple_log("Automatic Backup completed successfully.")
+        last_backup_time = now
+
+    except Exception as e:
+        write_simple_log(f"Automatic Backup failed: {e}")
+
+
 
 ### Commandes et événements de bot ###
 
@@ -202,7 +323,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-### Commandes diverses ###
+### Commandes musiques et autres ###
 
 @bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
 async def pileouface_command(interaction: discord.Interaction):
