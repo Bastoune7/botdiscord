@@ -1,3 +1,15 @@
+#------------------------------------------------
+#   BOT RÉALISÉ PAR BASTIEN KULMATISKI
+#
+#   V0.2
+#
+#------------------------------------------------
+
+
+#------------------------------------------------
+#   DÉPENDANCES
+#------------------------------------------------
+
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
@@ -25,7 +37,12 @@ intents.messages = True
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-## VARIABLE GÉNÉRALES
+
+
+#------------------------------------------------
+#   VARIABLES GÉNÉRALES
+#------------------------------------------------
+
 BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
 SERVER_PATH = "../../minecraft server java"
 bastien_mention = "<@337903281999314944>"
@@ -38,7 +55,10 @@ backup_interval = timedelta(hours=24) #Intervalle par défaut des sauvegardes au
 last_backup_time = None
 
 
-### Fonctions de journalisation ###
+
+#------------------------------------------------
+#   JOURNALISATION
+#------------------------------------------------
 
 def log_command(command_name, user, args, success=True):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -58,7 +78,11 @@ def write_simple_log(message):
     with open(BOT_LOG_FILE, "a") as log:
         log.write(f"[{timestamp}] {message}\n")
 
-### Fonctions de gestion du serveur Minecraft ###
+
+
+#------------------------------------------------
+#   GESTION SERVEUR MINECRAFT
+#------------------------------------------------
 
 async def start_minecraft_server():
     global server_process
@@ -131,20 +155,11 @@ async def monitor_server_logs(interaction):
     except Exception as e:
         await interaction.followup.send(f"Erreur lors de la surveillance des logs : {e}")
 
-def get_last_successful_backup_time():
-    if not os.path.exists(BOT_LOG_FILE):
-        return None
 
-    with open(BOT_LOG_FILE, "r") as log:
-        lines = log.readlines()
 
-    for line in reversed(lines):
-        if "Backup completed successfully" in line:
-            timestamp = line.split("]")[0][1:] #Extraction de l'horadatage
-            return datetime.strftime(timestamp, "%Y-%m-%d %H:%M:%S")
-    return None
-
-### Commandes de gestion du serveur Minecraft ###
+#------------------------------------------------
+#   COMMANDES GESTION SERVEUR MINECRAFT
+#------------------------------------------------
 
 @bot.tree.command(name="start_minecraft", description="Démarre le serveur Minecraft.")
 async def start_minecraft(interaction: discord.Interaction):
@@ -185,7 +200,6 @@ async def restart_minecraft(interaction: discord.Interaction):
     success_stop = await stop_minecraft_server()
     await asyncio.sleep(5)
     success_start = await start_minecraft_server()
-
     if success_stop and success_start:
         await interaction.followup.send("✅ Serveur Minecraft redémarré avec succès.")
         log_command("restart_minecraft", interaction.user, [], success=True)
@@ -193,53 +207,74 @@ async def restart_minecraft(interaction: discord.Interaction):
         await interaction.followup.send("❌ Échec du redémarrage du serveur Minecraft.")
         log_command("restart_minecraft", interaction.user, [], success=False)
 
-    @bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
-    async def check_minecraft(interaction: discord.Interaction):
-        await interaction.response.defer()
-        is_online, status = await check_minecraft_status()
-        if is_online:
-            await interaction.followup.send("🟢 Le serveur Minecraft est en ligne !")
-        else:
-            await interaction.followup.send(f"🔴 Le serveur Minecraft est hors ligne. Raison : {status}")
-        log_command("check_minecraft", interaction.user, [], success=is_online)
+@bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
+async def check_minecraft(interaction: discord.Interaction):
+    await interaction.response.defer()
+    is_online, status = await check_minecraft_status()
+    if is_online:
+        await interaction.followup.send("🟢 Le serveur Minecraft est en ligne !")
+    else:
+        await interaction.followup.send(f"🔴 Le serveur Minecraft est hors ligne. Raison : {status}")
+    log_command("check_minecraft", interaction.user, [], success=is_online)
 
-        #Commande /backup_now
-        @bot.command()
-        async def backup_now(ctx):
-            global last_backup_time
 
-            if not ctx.author.guild_permissions.administrator:
-                await ctx.send(f"Je suis désolé, mais tu n'as pas la permission de faire une backup. Si besoin tu peux tout de même demander à {bastien_mention}")
-                return
 
-            now = datetime.now()
-            if last_backup_time and now - last_backup_time < timedelta(minutes=5):
-                await ctx.send("Je suis désolé, mais une sauvegarde a été faite il y a moins de 5min. Pour éviter le blinder le serveur de backup je ne vais donc pas l'exécuter. Toutefois si c'est un bug, il faut le signaler.")
+#------------------------------------------------
+#   COMMANDE BACKUP SERVEUR MINECRAFT
+#------------------------------------------------
 
-            backup_name = f"mc-{now.strftime('%Y-%m-%d').zip}"
-            backup_path = os.path.join(BACKUP_PATH, backup_name)
+@bot.command()
+async def backup_now(ctx):
+    global last_backup_time
 
-            try:
-                write_simple_log("Starting backup process...")
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send(f"Je suis désolé, mais tu n'as pas la permission de faire une backup. Si besoin tu peux tout de même demander à {bastien_mention}")
+        return
 
-                # Création du dossier de sauvegarde si nécessaire
-                os.makedirs(BACKUP_PATH, exist_ok=True)
+    now = datetime.now()
+    if last_backup_time and now - last_backup_time < timedelta(minutes=5):
+        await ctx.send("⚠️ Je suis désolé, mais la dernière backup aurait été faite il y a moins de 5min. Pour éviter de saturer le stockage des sauvegardes, je ne vais pas aller au bout de ta requête. Si ta sauvegarde est importante, attend 5min ! 😉")
 
-                #Création de l'archive zip
-                with zipfile.ZipFile(backup_path, 'w') as backup_zip:
-                    for foldername, subfolders, filenames in os.walk(SERVER_PATH):
-                        for filename in filenames:
-                            file_path = os.path.join(foldername, filename)
-                            arcname = os.path.relpath(file_path, SERVER_PATH)
-                            backup_zip.write(file_path, arcname)
+    backup_name = f"mc-{now.strftime('%Y-%m-%d').zip}"
+    backup_path = os.path.join(BACKUP_PATH, backup_name)
 
-                write_simple_log("Backup completed successfully !")
-                last_backup_time = now
-                await ctx.send("Sauvegarde du serveur minecraft effectuée avec succès !")
+    try:
+        write_simple_log("Starting backup process...")
 
-            except Exception as e:
-                write_simple_log(f"Backup failed: {e}")
-                await ctx.send(f"Échec de la sauvegarde du serveur minecraft. Euh, {bastien_mention} faudrait checker stp 🙃")
+        # Création du dossier de sauvegarde si nécessaire
+        os.makedirs(BACKUP_PATH, exist_ok=True)
+
+        #Création de l'archive zip
+        with zipfile.ZipFile(backup_path, 'w') as backup_zip:
+            for foldername, subfolders, filenames in os.walk(SERVER_PATH):
+                for filename in filenames:
+                    file_path = os.path.join(foldername, filename)
+                    arcname = os.path.relpath(file_path, SERVER_PATH)
+                    backup_zip.write(file_path, arcname)
+
+        write_simple_log("Backup completed successfully !")
+        last_backup_time = now
+        await ctx.send("✅ Sauvegarde du serveur minecraft effectuée avec succès !")
+
+    except Exception as e:
+        write_simple_log(f"Backup failed: {e}")
+        await ctx.send(f"Échec de la sauvegarde du serveur minecraft. {bastien_mention} faudrait checker stp 🙃")
+
+
+def get_last_successful_backup_time():
+    if not os.path.exists(BOT_LOG_FILE):
+        return None
+
+    with open(BOT_LOG_FILE, "r") as log:
+        lines = log.readlines()
+
+    for line in reversed(lines):
+        if "Backup completed successfully" in line:
+            timestamp = line.split("]")[0][1:] #Extraction de l'horadatage
+            return datetime.strftime(timestamp, "%Y-%m-%d %H:%M:%S")
+    return None
+
+
 @bot.command()
 async def backup_schedule(ctx, interval_hours: int):
     if str(ctx.author.mention) != bastien_mention:
@@ -256,6 +291,7 @@ async def backup_status(ctx):
     last_backup_time = get_last_successful_backup_time()
     status = "non définie" if not last_backup_time else last_backup_time.strftime("%Y-%m-%d %H:%M:%S")
     await ctx.send(f"Dernière sauvegarde réussie : {status}\nIntervalle des sauvegardes : {BACKUP_INTERVAL}.")
+
 @bot.command()
 async def disable_backup(ctx):
     if str(ctx.author.mention) != bastien_mention:
@@ -299,7 +335,9 @@ async def auto_backup():
 
 
 
-### Commandes et événements de bot ###
+#------------------------------------------------
+#   COMMANDES ET ÉVÉNEMENTS DU BOT
+#------------------------------------------------
 
 @bot.event
 async def on_ready():
@@ -323,16 +361,11 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-### Commandes musiques et autres ###
 
-@bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
-async def pileouface_command(interaction: discord.Interaction):
-    try:
-        await pile_ou_face(interaction)
-        log_command("pileouface", interaction.user, [], success=True)
-    except Exception as e:
-        await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
-        log_command("pileouface", interaction.user, [], success=False)
+
+#------------------------------------------------
+#   COMMANDES MUSIQUES
+#------------------------------------------------
 
 @bot.tree.command(name="play", description="Joue de la musique depuis une URL YouTube.")
 async def play_command(interaction: discord.Interaction, url: str):
@@ -363,7 +396,11 @@ async def leave_command(interaction: discord.Interaction):
         await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
         log_command("leave", interaction.user, [], success=False)
 
-### Commandes de gestion des utilisateurs ###
+
+
+#------------------------------------------------
+#   COMMANDES GESTION DES UTILISATEURS
+#------------------------------------------------
 
 @bot.tree.command(name="tg", description="Mute un utilisateur pendant une durée spécifiée.")
 @app_commands.describe(user="L'utilisateur à muter", duration="Durée du mute en secondes",
@@ -412,7 +449,26 @@ async def untg_command(interaction: discord.Interaction, user: discord.Member):
     else:
         await interaction.response.send_message(f"{user.mention} n'a pas mangé de tg 🤓")
 
-### Gestion des signaux et exceptions ###
+
+
+#------------------------------------------------
+#   AUTRES COMMANDES
+#------------------------------------------------
+
+@bot.tree.command(name="pileouface", description="Lance une pièce pour pile ou face")
+async def pileouface_command(interaction: discord.Interaction):
+    try:
+        await pile_ou_face(interaction)
+        log_command("pileouface", interaction.user, [], success=True)
+    except Exception as e:
+        await interaction.response.send_message("Erreur lors de l'exécution de la commande.", ephemeral=True)
+        log_command("pileouface", interaction.user, [], success=False)
+
+
+
+#------------------------------------------------
+#   GESTION DES SIGNAUX ET EXCEPTIONS
+#------------------------------------------------
 
 def on_shutdown(reason=""):
     log_event("Arrêt", reason)
