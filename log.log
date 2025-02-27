@@ -3,3 +3,101 @@
 [2025-01-21 15:19:46] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
 [2025-01-21 21:09:04] Événement: Démarrage, Raison: Bot connecté et prêt
 [2025-01-26 10:19:48] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-01-26 10:52:44] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-01-26 10:56:50] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-01-26 10:58:30] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-07 17:04:40] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-12 18:19:26] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-14 13:31:37] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-18 02:20:33] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-21 12:35:13] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-26 13:58:13] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 14:23:06] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 14:23:25] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 14:24:19] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 14:24:26] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 19:51:25] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 19:51:38] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 19:52:49] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 19:53:11] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 19:53:24] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 19:59:26] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 19:59:32] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 19:59:39] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:06:48] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:06:55] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 20:08:15] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:08:21] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 20:08:34] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:08:38] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 20:11:20] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:11:27] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 20:12:17] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:14:43] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:14:53] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 20:15:12] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:16:32] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:16:39] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 20:17:10] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:17:17] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:21:59] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:23:25] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 20:23:34] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 20:58:55] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 20:59:59] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:00:43] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:10:53] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:13:04] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:13:14] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:16:22] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:16:28] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:16:39] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:18:27] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:18:33] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:18:43] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:18:54] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:22:36] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:27:00] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:29:16] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:29:32] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:30:14] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:38:42] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:40:07] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:40:16] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:40:29] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:42:34] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:42:38] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:42:43] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:48:01] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:48:08] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:48:21] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:48:30] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:49:03] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:49:06] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:49:25] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:50:10] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:50:16] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:50:25] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:50:33] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:51:03] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:51:11] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:52:34] Commande: restart_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:52:48] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:53:22] Commande: restart_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:53:58] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:54:32] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:54:36] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:54:39] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec
+[2025-02-27 21:54:47] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 21:54:55] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 21:54:58] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 21:55:23] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 22:02:28] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 22:02:36] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 22:02:44] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 22:05:43] Événement: Arrêt, Raison: Arrêt manuel (Ctrl+C)
+[2025-02-27 22:06:45] Événement: Démarrage, Raison: Bot connecté et prêt
+[2025-02-27 22:06:57] Commande: start_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 22:07:28] Commande: restart_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 22:07:57] Commande: stop_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Succès
+[2025-02-27 22:08:05] Commande: check_minecraft, Utilisateur: .bastoune_, Arguments: [], Statut: Échec

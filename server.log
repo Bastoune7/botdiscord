@@ -1,1 +1,46 @@
-Error: Unable to access jarfile server.jar
+Starting net.minecraft.server.Main
+[22:07:33] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[22:07:35] [ServerMain/INFO]: Loaded 7 recipes
+[22:07:36] [ServerMain/INFO]: Loaded 1271 advancements
+[22:07:36] [Server thread/INFO]: Starting minecraft server version 1.20.4
+[22:07:36] [Server thread/INFO]: Loading properties
+[22:07:36] [Server thread/INFO]: Default game type: SURVIVAL
+[22:07:36] [Server thread/INFO]: Generating keypair
+[22:07:36] [Server thread/INFO]: Starting Minecraft server on *:10586
+[22:07:36] [Server thread/INFO]: Using default channel type
+[22:07:37] [Server thread/WARN]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[22:07:37] [Server thread/WARN]: The server will make no attempt to authenticate usernames. Beware.
+[22:07:37] [Server thread/WARN]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[22:07:37] [Server thread/WARN]: To change this, set "online-mode" to "true" in the server.properties file.
+[22:07:37] [Server thread/INFO]: Preparing level "world"
+[22:07:40] [Server thread/INFO]: Preparing start region for dimension minecraft:overworld
+[22:07:44] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-3/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-2/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-3/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-2/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-2/INFO]: Preparing spawn area: 0%
+[22:07:44] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:45] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:45] [Worker-Main-1/INFO]: Preparing spawn area: 0%
+[22:07:46] [Worker-Main-1/INFO]: Preparing spawn area: 34%
+[22:07:46] [Server thread/INFO]: Time elapsed: 6823 ms
+[22:07:46] [Server thread/INFO]: Done (9.852s)! For help, type "help"
+[22:07:46] [Server thread/INFO]: Starting remote control listener
+[22:07:46] [Server thread/INFO]: Thread RCON Listener started
+[22:07:46] [Server thread/INFO]: RCON running on 0.0.0.0:10587
+[22:07:56] [Server thread/INFO]: Stopping the server
+[22:07:56] [Server thread/INFO]: Stopping server
+[22:07:56] [Server thread/INFO]: Saving players
+[22:07:56] [Server thread/INFO]: Saving worlds
+[22:07:56] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[22:07:56] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[22:07:56] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[22:07:56] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[22:07:56] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[22:07:56] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[22:07:56] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[22:07:56] [Server thread/INFO]: Thread RCON Listener stopped

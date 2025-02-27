@@ -44,7 +44,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 #------------------------------------------------
 
 BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
-SERVER_PATH = "../../minecraft server java"
+SERVER_PATH = "C:/minecraft_server_java"
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
@@ -84,17 +84,28 @@ def write_simple_log(message):
 #   GESTION SERVEUR MINECRAFT
 #------------------------------------------------
 
+# java_path = r"C:\Program Files\Common Files\Oracle\Java\javapath\java.exe"
+
 async def start_minecraft_server():
     global server_process
     try:
-        # Démarrer le serveur Minecraft
+        java_path = r"C:\Program Files\Common Files\Oracle\Java\javapath\java.exe"
+        server_java_path = SERVER_PATH+"/server.jar"
+
         with open(LOG_FILE, "w") as log_file:
             server_process = subprocess.Popen(
-                ["java", "-Xmx1024M", "-Xms1024M", "-jar", "server.jar", "nogui"],
+                [java_path, "-Xmx1024M", "-Xms1024M", "-jar", server_java_path, "nogui"],
                 stdout=log_file,
                 stderr=log_file,
-                shell=True
+                stdin=subprocess.PIPE,
+                cwd=SERVER_PATH
             )
+
+        await asyncio.sleep(3)  # Attend un peu pour voir si ça crashe
+
+        if server_process.poll() is not None:
+            raise RuntimeError("Le processus du serveur Minecraft s'est arrêté immédiatement.")
+
         return True
     except Exception as e:
         print(f"Erreur lors du démarrage du serveur : {e}")
@@ -105,8 +116,10 @@ async def stop_minecraft_server():
     global server_process
     try:
         if server_process and server_process.poll() is None:
-            server_process.terminate()
-            server_process.wait()
+            # Envoie la commande 'stop' au processus du serveur
+            server_process.stdin.write(b"stop\n")
+            server_process.stdin.flush()
+            server_process.wait()  # Attend la fin du processus
             server_process = None
             return True
         return False
@@ -188,23 +201,29 @@ async def stop_minecraft(interaction: discord.Interaction):
         await interaction.followup.send("✅ Serveur Minecraft arrêté avec succès.")
         log_command("stop_minecraft", interaction.user, [], success=True)
     else:
-        await interaction.followup.send("❌ Échec de l'arrêt du serveur Minecraft.")
+        await interaction.followup.send("❌ Échec de l'arrêt du serveur Minecraft. Le serveur n'est peut-être pas en ligne...")
         log_command("stop_minecraft", interaction.user, [], success=False)
 
 @bot.tree.command(name="restart_minecraft", description="Redémarre le serveur Minecraft.")
 async def restart_minecraft(interaction: discord.Interaction):
+    global server_process
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("🚫 Vous n'avez pas les permissions pour exécuter cette commande.")
         return
     await interaction.response.defer()
     success_stop = await stop_minecraft_server()
-    await asyncio.sleep(5)
+
+    if server_process:
+        while server_process.poll() is None:
+            await asyncio.sleep(1)  # Attend que le processus se termine
+        server_process = None  # Réinitialise la variable du processus
+
     success_start = await start_minecraft_server()
     if success_stop and success_start:
         await interaction.followup.send("✅ Serveur Minecraft redémarré avec succès.")
         log_command("restart_minecraft", interaction.user, [], success=True)
     else:
-        await interaction.followup.send("❌ Échec du redémarrage du serveur Minecraft.")
+        await interaction.followup.send("❌ Échec du redémarrage du serveur Minecraft. Le serveur est-il bien lancé ?")
         log_command("restart_minecraft", interaction.user, [], success=False)
 
 @bot.tree.command(name="check_minecraft", description="Vérifie si le serveur Minecraft est en ligne.")
