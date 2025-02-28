@@ -45,6 +45,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
 SERVER_PATH = "C:/minecraft_server_java"
+SERVER_IP = MinecraftServer("localhost", 10586)
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
@@ -151,8 +152,7 @@ async def stop_minecraft_server():
 async def check_minecraft_status():
     """Vérifie si le serveur Minecraft est en ligne."""
     try:
-        server = MinecraftServer("localhost", 10586)
-        status = server.status()
+        status = SERVER_IP.status()
         return True, status
     except Exception as e:
         return False, str(e)
@@ -273,6 +273,35 @@ async def log_minecraft(interaction: discord.Interaction):
     else:
         await interaction.followup.send("❌ Le fichier latest.log est introuvable.")
         log_command("log_minecraft", interaction.user, [], success=False, error="File not found")
+
+
+@bot.tree.command(name="who_play_minecraft", description="Liste les joueurs actuellement en ligne sur le serveur Minecraft.")
+async def joueurs_minecraft(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        # Récupère le statut du serveur
+        status = SERVER_IP.status()
+
+        # Si des joueurs sont en ligne
+        if status.players.online > 0:
+            online_players = status.players.sample  # Liste des joueurs en ligne
+            players = ", ".join([player.name for player in online_players])  # Extraction des noms
+
+            # Adaptation de la phrase selon le nombre de joueurs
+            if status.players.online == 1:
+                await interaction.followup.send(f"Le joueur en ligne est : {players}")
+            else:
+                await interaction.followup.send(f"Les joueurs en ligne sont : {players}")
+
+            log_command("who_play_minecraft", interaction.user, [], success=True)
+        else:
+            await interaction.followup.send("Aucun joueur n'est actuellement en ligne.")
+            log_command("who_play_minecraft", interaction.user, [], success=True)
+
+    except Exception as e:
+        await interaction.followup.send("❌ Impossible de récupérer la liste des joueurs en ligne. Tu peux vérifier l'état du serveur avec '/check_minecraft'.")
+        log_command("who_play_minecraft", interaction.user, [], success=False, error=str(e))
 
 
 
