@@ -81,10 +81,31 @@ def write_simple_log(message):
 
 
 #------------------------------------------------
-#   GESTION SERVEUR MINECRAFT
+#   COMMANDES JOURNALISATION
 #------------------------------------------------
 
-# java_path = r"C:\Program Files\Common Files\Oracle\Java\javapath\java.exe"
+@bot.tree.command(name="log_bot", description="Envoie le dernier log du bot.")
+async def log_bot(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    log_file_path = os.path.join("log.log")
+
+    if os.path.exists(log_file_path):
+        try:
+            await interaction.followup.send(file=discord.File(log_file_path))
+            log_command("log_bot", interaction.user, [], success=True)
+        except Exception as e:
+            await interaction.followup.send("❌ Erreur lors de l'envoi du fichier: le fichier log est bien présent mais je ne suis pas capable de l'envoyer. (problème de droit ... ?)")
+            log_command("log_bot", interaction.user, [], success=False, error=str(e))
+    else:
+        await interaction.followup.send("❌ Le fichier latest.log est introuvable.")
+        log_command("log_bot", interaction.user, [], success=False, error="File not found")
+
+
+
+#------------------------------------------------
+#   GESTION SERVEUR MINECRAFT
+#------------------------------------------------
 
 async def start_minecraft_server():
     global server_process
@@ -235,6 +256,23 @@ async def check_minecraft(interaction: discord.Interaction):
     else:
         await interaction.followup.send(f"🔴 Le serveur Minecraft est hors ligne. Raison : {status}")
     log_command("check_minecraft", interaction.user, [], success=is_online)
+
+@bot.tree.command(name="log_minecraft", description="Envoie le dernier log du serveur Minecraft.")
+async def log_minecraft(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    log_file_path = os.path.join(SERVER_PATH, "logs", "latest.log")
+
+    if os.path.exists(log_file_path):
+        try:
+            await interaction.followup.send(file=discord.File(log_file_path))
+            log_command("log_minecraft", interaction.user, [], success=True)
+        except Exception as e:
+            await interaction.followup.send("❌ Erreur lors de l'envoi du fichier: le fichier log est bien présent mais je ne suis pas capable de l'envoyer. (problème de droit ... ?)")
+            log_command("log_minecraft", interaction.user, [], success=False, error=str(e))
+    else:
+        await interaction.followup.send("❌ Le fichier latest.log est introuvable.")
+        log_command("log_minecraft", interaction.user, [], success=False, error="File not found")
 
 
 
