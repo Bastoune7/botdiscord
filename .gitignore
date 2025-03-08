@@ -5,12 +5,6 @@
 config.txt
 log.txt
 server_path.txt
-<<<<<<< Updated upstream
-/venv
-=======
->>>>>>> Stashed changes
-log.log
 log.log
 server.log
-log.log
-server.log
+rcon.txt

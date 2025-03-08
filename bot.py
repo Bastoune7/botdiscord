@@ -2,7 +2,6 @@
 #   BOT RÉALISÉ PAR BASTIEN KULMATISKI
 #
 #   V0.2
-#
 #------------------------------------------------
 
 
@@ -26,10 +25,10 @@ from pile_ou_face import pile_ou_face
 from mcstatus import MinecraftServer
 from queue import Queue
 import aiofiles
+from mcrcon import MCRcon
+import json
 
-# Charger le token depuis config.txt
-with open("config.txt", "r") as file:
-    TOKEN = file.read().strip()
+
 
 # Initialiser le bot et les intents
 intents = discord.Intents.default()
@@ -46,6 +45,8 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
 SERVER_PATH = "C:/minecraft_server_java"
 SERVER_IP = MinecraftServer("localhost", 10586)
+RCON_HOST = "90.70.168.221"
+RCON_PORT = 10587
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
@@ -54,6 +55,12 @@ LOG_FILE = "server.log" #Fichier de log du serveur minecraft
 BOT_LOG_FILE = "log.log" #Fichier de log des événements et commandes du bot
 backup_interval = timedelta(hours=24) #Intervalle par défaut des sauvegardes automatiques
 last_backup_time = None
+# Charger le token depuis config.txt
+with open("config.txt", "r") as file:
+    TOKEN = file.read().strip()
+# Charger le pass rcon depuis rcon.txt
+with open("rcon.txt", "r") as file:
+    RCON_PASS = file.read().strip()
 
 
 
@@ -301,7 +308,7 @@ async def joueurs_minecraft(interaction: discord.Interaction):
 
     except Exception as e:
         await interaction.followup.send("❌ Impossible de récupérer la liste des joueurs en ligne. Tu peux vérifier l'état du serveur avec '/check_minecraft'.")
-        log_command("who_play_minecraft", interaction.user, [], success=False, error=str(e))
+        log_command("who_play_minecraft", interaction.user, [], success=False)
 
 
 
@@ -346,7 +353,6 @@ async def backup_now(ctx):
         write_simple_log(f"Backup failed: {e}")
         await ctx.send(f"Échec de la sauvegarde du serveur minecraft. {bastien_mention} faudrait checker stp 🙃")
 
-
 def get_last_successful_backup_time():
     if not os.path.exists(BOT_LOG_FILE):
         return None
@@ -359,7 +365,6 @@ def get_last_successful_backup_time():
             timestamp = line.split("]")[0][1:] #Extraction de l'horadatage
             return datetime.strftime(timestamp, "%Y-%m-%d %H:%M:%S")
     return None
-
 
 @bot.command()
 async def backup_schedule(ctx, interval_hours: int):
@@ -418,6 +423,105 @@ async def auto_backup():
 
     except Exception as e:
         write_simple_log(f"Automatic Backup failed: {e}")
+
+
+#------------------------------------------------
+#   STATS SERVEUR MINECRAFT
+#------------------------------------------------
+
+# Fonction pour calculer le ratio K/D
+def calculate_kd_ratio(kills, deaths):
+    if deaths == 0:
+        return kills  # Si le joueur n'a jamais été tué, son ratio est son nombre de kills
+    return kills / deaths
+
+# Fonction pour récupérer l'UUID d'un joueur depuis usercache.json
+def get_uuid(username, usercache_path=SERVER_PATH+"/usercache.json"):
+    try:
+        with open(usercache_path, "r", encoding="utf-8") as f:
+            user_data = json.load(f)
+
+        for user in user_data:
+            if user["name"].lower() == username.lower():
+                return user["uuid"]
+    except Exception as e:
+        print(f"Erreur lors de la récupération de l'UUID : {str(e)}")
+
+    return None  # Joueur introuvable
+
+# Fonction pour récupérer les stats du joueur depuis le fichier UUID.json
+def get_player_stats(uuid, stats_path=SERVER_PATH+"/world/stats"):
+    stats_file = os.path.join(stats_path, f"{uuid}.json")
+
+    try:
+        with open(stats_file, "r", encoding="utf-8") as f:
+            stats_data = json.load(f)
+
+        # Récupération des statistiques
+        kills = stats_data["stats"]["minecraft:custom"].get("minecraft:player_kills", 0)
+        deaths = stats_data["stats"]["minecraft:custom"].get("minecraft:deaths", 0)
+        playtime_ticks = stats_data["stats"]["minecraft:custom"].get("minecraft:play_time", 0)
+
+        playtime_hours = (playtime_ticks / 20) / 3600  # Convertit les ticks en heures
+
+        return kills, deaths, playtime_hours
+    except FileNotFoundError:
+        return None, None, None  # Pas de stats trouvées
+    except Exception as e:
+        print(f"Erreur lors de la lecture des stats : {str(e)}")
+        return None, None, None
+
+# Fonction pour récupérer le nombre de blocs minés
+def get_blocks_mined(uuid, block_type, stats_path=SERVER_PATH+"/world/stats"):
+    stats_file = os.path.join(stats_path, f"{uuid}.json")
+
+    try:
+        with open(stats_file, "r", encoding="utf-8") as f:
+            stats_data = json.load(f)
+
+        blocks_mined = stats_data["stats"]["minecraft:mined"].get(block_type, 0)
+        return blocks_mined
+    except FileNotFoundError:
+        return None
+    except Exception as e:
+        print(f"Erreur lors de la lecture des blocs minés : {str(e)}")
+        return None
+
+# Commande Discord
+@bot.tree.command(name="stats_minecraft", description="Affiche les statistiques d'un joueur du serveur Minecraft.")
+async def stats_minecraft(interaction: discord.Interaction, player_name: str):
+    await interaction.response.defer()
+
+    try:
+        uuid = get_uuid(player_name)
+        if not uuid:
+            await interaction.followup.send(f"❌ Joueur {player_name} introuvable dans le usercache.")
+            return
+
+        kills, deaths, playtime = get_player_stats(uuid)
+        if kills is None:
+            await interaction.followup.send(f"❌ Impossible de récupérer les statistiques de {player_name}.")
+            return
+
+        kd_ratio = calculate_kd_ratio(kills, deaths)
+
+        mined_diamonds = get_blocks_mined(uuid, "minecraft:deepslate_diamond_ore") + get_blocks_mined(uuid, "minecraft:diamond_ore")
+        mined_iron = get_blocks_mined(uuid, "minecraft:iron_ore") + get_blocks_mined(uuid, "minecraft:deepslate_iron_ore")
+
+        response = (
+            f"**Statistiques de {player_name}:**\n"
+            f"⏱️ Temps de jeu : {playtime:.2f} heures\n"
+            f"🗡️ Kills : {kills}\n"
+            f"⚰️ Morts : {deaths}\n"
+            f"☠️ Ratio K/D : {kd_ratio:.2f}" + "  (1< = plus de kill que de mort 💪)\n"
+            f"💎 Diamants minés : {mined_diamonds if mined_diamonds is not None else 0}\n"
+            f"⛏️ Fer miné : {mined_iron if mined_iron is not None else 0}\n"
+        )
+
+        await interaction.followup.send(response)
+
+    except Exception as e:
+        await interaction.followup.send(f"❌ Erreur lors de la récupération des statistiques de {player_name}: {str(e)}")
 
 
 
