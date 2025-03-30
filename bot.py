@@ -12,10 +12,13 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
+
+import darkweb.darkweb
 from music_player import play_music, stop_music, leave_voice_channel
 import asyncio
 from datetime import datetime, timedelta
 import signal
+import random
 import sys
 import subprocess
 import os
@@ -34,6 +37,7 @@ import json
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
+intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
@@ -61,6 +65,8 @@ with open("config.txt", "r") as file:
 # Charger le pass rcon depuis rcon.txt
 with open("rcon.txt", "r") as file:
     RCON_PASS = file.read().strip()
+# Liste des ID des membres considérés comme "aigris"
+AIGRIS_IDS = [1163027245074485350,1097159126708125707]
 
 
 
@@ -109,6 +115,28 @@ async def log_bot(interaction: discord.Interaction):
         await interaction.followup.send("❌ Le fichier latest.log est introuvable.")
         log_command("log_bot", interaction.user, [], success=False, error="File not found")
 
+
+
+#------------------------------------------------
+#   Aigrimetre
+#------------------------------------------------
+
+def calculate_aigreur(member_id: int) -> int:
+    """Calcule un taux d'aigreur humoristique."""
+    if member_id in AIGRIS_IDS:
+        return random.randint(58, 100)  # Toujours supérieur à 58%
+    return random.randint(0, 100)  # Valeur normale pour les autres
+
+@bot.tree.command(name="aigrimetre", description="Mesure l'aigreur d'un membre du serveur.")
+@app_commands.describe(member="Sélectionnez le membre à analyser")
+async def aigrimetre(interaction: discord.Interaction, member: discord.Member):
+    aigreur = calculate_aigreur(member.id)
+    if aigreur<50:
+        await interaction.response.send_message(f"Ok pas de panique ✅, {member.mention} n'est aigri qu'à {aigreur}%... 🧘🏻")
+        log_command("aigrimetre", interaction.user, [member], success=True)
+    else:
+        await interaction.response.send_message(f"🥶 Ah... Visiblement t'es encore aigri {member.mention}, l'aigrimètre a mesuré {aigreur}% !! 😱 Quitte le serveur je pense que c'est mieux...")
+        log_command("aigrimetre", interaction.user, [member], success=True)
 
 
 #------------------------------------------------
@@ -421,6 +449,7 @@ async def on_ready():
     await bot.tree.sync()
     print(f'Bot connecté en tant que {bot.user}')
     log_event("Démarrage", "Bot connecté et prêt")
+    await darkweb.darkweb.setup_darkweb(bot)
 
 @bot.event
 async def on_message(message):

@@ -8,3 +8,7 @@ server_path.txt
 log.log
 server.log
 rcon.txt
+.DS_Store
+log.log
+darkweb/.DS_Store
+/.idea
