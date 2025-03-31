@@ -12,3 +12,7 @@ rcon.txt
 log.log
 darkweb/.DS_Store
 /.idea
+/darkweb/modules/__pycache__
+darkweb/darkweb.log
+/darkweb/__pycache__
+/__pycache__
