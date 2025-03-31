@@ -1,5 +1,8 @@
+import asyncio
+
 from discord.ext import commands
 import darkweb.modules.users as users  # Importation du module de gestion des utilisateurs
+import darkweb.modules.levels as levels # Importation du module de gestion des levels
 import logging
 
 # Log system
@@ -15,8 +18,11 @@ logger = logging.getLogger("darkweb") # Creating a global logger
 
 
 async def setup_darkweb(bot):
-    """initialise le module DarkWeb"""
-    await users.check_users(bot) # Vérifie et met à jour les utilisateurs au démarrage
+
+    await asyncio.gather(
+        users.check_users(bot), # Vérifie les utilisateurs
+        levels.check_levels() # Vérifie les niveaux
+    )
 
     logger.info("[CHECK] DarkWeb initialisation completed")
     print("[DarkWeb] Initialisation terminée.")

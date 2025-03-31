@@ -1,0 +1,32 @@
+{
+    "0": {
+        "level": 0,
+        "xp_required": 0,
+        "name": "Novice",
+        "price": 0
+    },
+    "1": {
+        "level": 1,
+        "xp_required": 100,
+        "name": "Apprenti Hacker",
+        "price": 500
+    },
+    "2": {
+        "level": 2,
+        "xp_required": 250,
+        "name": "Cyber Voleur",
+        "price": 1500
+    },
+    "3": {
+        "level": 3,
+        "xp_required": 500,
+        "name": "Pirate Confirmé",
+        "price": 3000
+    },
+    "4": {
+        "level": 4,
+        "xp_required": 1000,
+        "name": "Légende du Dark Web",
+        "price": 7500
+    }
+}

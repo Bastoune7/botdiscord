@@ -5,7 +5,7 @@ from discord.ext import commands
 import os
 
 # Définition du chemin du fichier JSON
-DATA_PATH = "darkweb/data/users.json"
+USERS_PATH = "darkweb/data/users.json"
 LOG_FILE = "darkweb/darkweb.log"
 ALLOWED_GUILDS = [1355821337322590299]
 
@@ -13,14 +13,13 @@ ALLOWED_GUILDS = [1355821337322590299]
 logger = logging.getLogger("darkweb")
 
 def load_users():
+    print(f"Checking USERS_PATH: {USERS_PATH}")
     """Charge les données des utilisateurs depuis le fichier JSON ou initialise un dictionnaire vide."""
-    if not os.path.exists(DATA_PATH):
-        logger.error("[ERROR] users.json file not found. (creating a temporary empty board until bot restart.)")
-        return {} # Si le fichier n'existe pas, on retourne un tableau vide
 
     try:
-        with open(DATA_PATH, 'r', encoding="utf-8") as file:
+        with open(USERS_PATH, 'r', encoding="utf-8") as file:
             data = file.read().strip()
+            print(json.loads(data))
             return json.loads(data) if data else {} # Retourne un tableau vide si le fichier est existant mais vide
     except json.JSONDecodeError:
         logger.error("[ERROR] file users.json is corrupt. It will be reset.")
@@ -29,7 +28,7 @@ def load_users():
 
 def save_users(users):
     """Sauvegarde les données des utilisateurs dans le fichier JSON."""
-    with open(DATA_PATH, "w", encoding="utf-8") as file:
+    with open(USERS_PATH, "w", encoding="utf-8") as file:
         json.dump(users, file, indent=4, ensure_ascii=False)
     logger.info("[UPDATE] update users.json file.")
 
