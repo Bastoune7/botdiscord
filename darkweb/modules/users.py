@@ -13,13 +13,12 @@ ALLOWED_GUILDS = [1355821337322590299]
 logger = logging.getLogger("darkweb")
 
 def load_users():
-    print(f"Checking USERS_PATH: {USERS_PATH}")
+    print(f"[DarkWeb]Checking USERS_PATH: {USERS_PATH}")
     """Charge les données des utilisateurs depuis le fichier JSON ou initialise un dictionnaire vide."""
 
     try:
         with open(USERS_PATH, 'r', encoding="utf-8") as file:
             data = file.read().strip()
-            print(json.loads(data))
             return json.loads(data) if data else {} # Retourne un tableau vide si le fichier est existant mais vide
     except json.JSONDecodeError:
         logger.error("[ERROR] file users.json is corrupt. It will be reset.")

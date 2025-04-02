@@ -28,17 +28,17 @@ from pile_ou_face import pile_ou_face
 from mcstatus import MinecraftServer
 from queue import Queue
 import aiofiles
-from mcrcon import MCRcon
 import json
 
 
 
 # Initialiser le bot et les intents
 intents = discord.Intents.default()
+intents.guilds = True
 intents.messages = True
 intents.message_content = True
 intents.members = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!', help_command=None,  intents=intents)
 
 
 
@@ -49,8 +49,6 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 BACKUP_PATH = "C:/Backup/Kulmatiski's server Backup"
 SERVER_PATH = "C:/minecraft_server_java"
 SERVER_IP = MinecraftServer("localhost", 10586)
-RCON_HOST = "90.70.168.221"
-RCON_PORT = 10587
 bastien_mention = "<@337903281999314944>"
 mute_tasks = {}
 log_queue = asyncio.Queue()
@@ -62,9 +60,6 @@ last_backup_time = None
 # Charger le token depuis config.txt
 with open("config.txt", "r") as file:
     TOKEN = file.read().strip()
-# Charger le pass rcon depuis rcon.txt
-with open("rcon.txt", "r") as file:
-    RCON_PASS = file.read().strip()
 # Liste des ID des membres considérés comme "aigris"
 AIGRIS_IDS = [1163027245074485350,1097159126708125707]
 
@@ -451,6 +446,11 @@ async def on_ready():
     log_event("Démarrage", "Bot connecté et prêt")
     await darkweb.darkweb.setup_darkweb(bot)
 
+async def main():
+    await bot.start(TOKEN)
+
+
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -589,8 +589,10 @@ def handle_exception(loop, context):
     log_event("Arrêt", f"Crash: {reason}")
     loop.default_exception_handler(context)
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
 loop.set_exception_handler(handle_exception)
 
-# Lancer le bot
-bot.run(TOKEN)
+
+# Exécuter le bot
+if __name__ == "__main__":
+    asyncio.run(main())  # On lance la boucle d'événements proprement
